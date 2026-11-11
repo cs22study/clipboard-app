@@ -29,7 +29,13 @@
     <p>請使用截圖快捷鍵 (如 Win+Shift+S) 截圖後，直接在此網頁按 <strong>Ctrl+V</strong> 貼上。</p>
     
     <!-- 圖片預覽區塊 -->
-    <div id="preview">圖片預覽區 (尚未貼上圖片)</div>
+    <div id="preview">圖片預覽區 (尚未貼上圖片)
+            <!-- 新增：隱藏的檔案選擇器與美化的按鈕 -->
+        <input type="file" id="fileInput" accept="image/*" style="display: none;">
+        <button id="selectImgBtn" style="background-color: #4CAF50; color: white; border: none; padding: 10px; border-radius: 5px; margin-top: 10px; width: 100%; font-size: 16px;">
+            📸 選擇圖片或開啟相機 (手機點這裡)
+        </button>   
+    </div>
     
     <!-- 文字輸入區塊 -->
     <textarea id="note" placeholder="在這裡輸入簡要記事..."></textarea>
@@ -58,6 +64,30 @@
                     
                     reader.readAsDataURL(blob); // 啟動讀取並轉換為 Base64
                 }
+            }
+        });
+
+        const fileInput = document.getElementById('fileInput');
+        const selectImgBtn = document.getElementById('selectImgBtn');
+
+        // 1. 當點擊「選擇圖片」按鈕時，觸發隱藏的檔案選擇器
+        selectImgBtn.addEventListener('click', function() {
+            fileInput.click();
+        });
+
+        // 2. 監聽檔案選擇器是否有選取照片或拍照
+        fileInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                
+                // 讀取完成後，顯示預覽圖並記錄 Base64
+                reader.onload = function(event) {
+                    currentBase64Image = event.target.result;
+                    previewDiv.innerHTML = `<img src="${currentBase64Image}" style="max-width: 100%;">`;
+                };
+                
+                reader.readAsDataURL(file); // 啟動讀取
             }
         });
 
