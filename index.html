@@ -3,6 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#4CAF50">
+    <!-- 加入 Apple 裝置的專屬支援 -->
+    <link rel="apple-touch-icon" href="icon-192.png">
     <title>雲端記事截圖 App</title>
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
@@ -107,6 +111,14 @@
                 uploadBtn.disabled = false;
             });
         });
+                // 註冊 Service Worker
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js')
+                .then(registration => console.log('Service Worker 註冊成功'))
+                .catch(err => console.log('Service Worker 註冊失敗', err));
+            });
+        }
     </script>
 </body>
 </html>
