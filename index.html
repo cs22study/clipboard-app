@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>雲端記事截圖 App</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
+        #preview { 
+            max-width: 100%; 
+            border: 2px dashed #ccc; 
+            min-height: 200px; 
+            margin-top: 10px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            color: #888; 
+        }
+        textarea { width: 100%; height: 80px; margin-top: 10px; padding: 5px; }
+        button { margin-top: 10px; padding: 10px 20px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>快速截圖與記事</h2>
+    <p>請使用截圖快捷鍵 (如 Win+Shift+S) 截圖後，直接在此網頁按 <strong>Ctrl+V</strong> 貼上。</p>
+    
+    <!-- 圖片預覽區塊 -->
+    <div id="preview">圖片預覽區 (尚未貼上圖片)</div>
+    
+    <!-- 文字輸入區塊 -->
+    <textarea id="note" placeholder="在這裡輸入簡要記事..."></textarea>
+    <br>
+    <button id="uploadBtn">上傳至 Google 雲端</button>
+
+    <script>
+        const previewDiv = document.getElementById('preview');
+        let currentBase64Image = null; // 用來儲存準備上傳的圖片資料
+
+        // 監聽網頁上的「貼上 (paste)」事件
+        window.addEventListener('paste', function(e) {
+            const items = e.clipboardData.items; // 取得剪貼簿內容
+            
+            for (let i = 0; i < items.length; i++) {
+                // 如果貼上的內容是圖片
+                if (items[i].type.indexOf('image') !== -1) {
+                    const blob = items[i].getAsFile();
+                    const reader = new FileReader();
+                    
+                    // 讀取完成後，將圖片顯示在網頁上，並記錄 Base64 字串
+                    reader.onload = function(event) {
+                        currentBase64Image = event.target.result;
+                        previewDiv.innerHTML = `<img src="${currentBase64Image}" style="max-width: 100%;">`;
+                    };
+                    
+                    reader.readAsDataURL(blob); // 啟動讀取並轉換為 Base64
+                }
+            }
+        });
+    </script>
+</body>
+</html>
