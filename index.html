@@ -56,6 +56,57 @@
                 }
             }
         });
+
+        const uploadBtn = document.getElementById('uploadBtn');
+
+        // 監聽上傳按鈕點擊事件
+        uploadBtn.addEventListener('click', function() {
+            if (!currentBase64Image) {
+                alert('請先按 Ctrl+V 貼上截圖！');
+                return;
+            }
+
+            const noteText = document.getElementById('note').value;
+            const gasUrl = 'https://script.google.com/macros/s/AKfycbxA8bKDmqH5VZYDqbgmUNvkZHu5yeRLeDWWCI7KQBfLxBvlJDWChkOgKpPHwNhmKR9B/exec'; // ★ 替換為您的網址
+
+            // 更改按鈕狀態，避免重複點擊
+            uploadBtn.innerText = '上傳中，請稍候...';
+            uploadBtn.disabled = true;
+
+            // 使用 fetch API 傳送資料到 GAS
+            fetch(gasUrl, {
+                method: 'POST',
+                // 使用 text/plain 可避免 GAS 嚴格的 CORS 預檢限制
+                headers: {
+                    'Content-Type': 'text/plain;charset=utf-8'
+                },
+                body: JSON.stringify({
+                    image: currentBase64Image,
+                    note: noteText
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('上傳成功！');
+                    // 成功後清空畫面，方便下一次截圖
+                    currentBase64Image = null;
+                    previewDiv.innerHTML = '圖片預覽區 (尚未貼上圖片)';
+                    document.getElementById('note').value = '';
+                } else {
+                    alert('後端處理失敗：' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('網路傳輸發生錯誤，請按 F12 檢查控制台。');
+            })
+            .finally(() => {
+                // 恢復按鈕狀態
+                uploadBtn.innerText = '上傳至 Google 雲端';
+                uploadBtn.disabled = false;
+            });
+        });
     </script>
 </body>
 </html>
