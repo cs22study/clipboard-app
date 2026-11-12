@@ -43,12 +43,16 @@
 
 ---
 
-## 🚀 新開 Session 專用開場白 (Session Kickoff Prompt)
+## 🚀 新開 Session 專用開場白 (Session Kickoff Prompts)
 
-當您開啟新的對話視窗進行下一階段模組開發時，**請直接複製並貼上下方這段開場白給 AI 助手**，AI 將會自動載入上下文並立即接續開發，無須重複解釋背景，節省超過 90% 的 Token！
+未來若需開啟新對話視窗進行**新模組開發**或**線上維運修復 BUG**，請根據任務性質複製以下對應的開場白貼給 AI 助手，AI 將立即載入精準上下文接續作業，節省超過 90% 的 Token！
+
+---
+
+### 模板 A：新功能模組開發 (Feature Development Session)
 
 ```markdown
-【雲端記事牆 APP - Hub-and-Spoke 接續開發指令】
+【雲端記事牆 APP - 功能開發接續指令】
 
 你好，我是專案負責人。本專案為「雲端記事牆 APP (Padlet 模式)」，採用 Hub-and-Spoke 架構開發。
 本地專案路徑：d:\志松資料\GAS程式AI運用小松資料區cs22study\線上筆記資料速記APP
@@ -69,6 +73,37 @@ GitHub Repo: https://github.com/cs22study/clipboard-app
 - 已具備本機 clasp CLI 環境 (Node.js LTS v26.13.1 + clasp v3.4.1)
 
 請先讀取 `docs/00_MASTER_INDEX.md` 與 `docs/05_TODO_LIST.md`，並告訴我目前待辦任務中最優先的模組是什麼，待我確認後即可開始實作！
+```
+
+---
+
+### 模板 B：線上維運與修 BUG (Bug-Fix & Maintenance Session)
+
+```markdown
+【雲端記事牆 APP - 線上維運與修 BUG 指令】
+
+你好，我是專案負責人。本專案為「雲端記事牆 APP (Padlet 模式)」，目前在線上運作中發現異常或 BUG，需要進行緊急維運修復。
+本地專案路徑：d:\志松資料\GAS程式AI運用小松資料區cs22study\線上筆記資料速記APP
+GitHub Repo: https://github.com/cs22study/clipboard-app
+
+請嚴格遵守本專案的 5 大系統開發原則：
+1. 所有修復程式碼皆由你自行分析、撰寫並執行完整回歸測試，嚴禁破壞既有功能。
+2. 避免任何資料外洩與資安風險 (嚴格確保 XSS 防護與權限白名單鎖定)。
+3. 隨時可復原 (修復前確認可秒級回滾，使用 clasp 與 Git 雙軌版控)。
+4. 零花費 (維持 100% 免費配額運作)。
+5. 節省 Token (專注於定位並解決通報之 BUG，完成後回寫 docs/07_RECOVERY_RUNBOOK.md 與相關文件)。
+
+【系統當前環境】
+- 最新 Web App 端點：https://script.google.com/macros/s/AKfycbznuGd3oq8QhzY4av8deOdNUS-f9b-r_fDqMPZl0DnXIIOEd4Ca5KlfqPZGlJmsVqM10g/exec
+- Google 試算表 ID：1n33bBAwBLvEuikyr0wRgWww8wsK5yYW33hcLYj7-STM
+- 截圖資料夾 ID：15Bo8djCeOuhexWLi-6sjr5uqmfk7IFfN (雲端記事牆資料截圖照片)
+- 主資料夾 ID：14LNISHVvM8h5oaVx4bKbTgnNcRqeQcmW (線上筆記資料速記APP)
+- 已配置本機 clasp CLI 環境 (Node.js LTS v26.13.1 + clasp v3.4.1)
+
+【通報問題描述】
+（請在此具體描述發生的錯誤現象、觸發情境、錯誤訊息截圖或文字、涉及的帳號或分頁）
+
+請參考 `docs/07_RECOVERY_RUNBOOK.md` 之維運 SOP，分析根因並提出最小衝擊的修復方案，待我確認後進行熱修復 (Hotfix) 與驗證！
 ```
 
 ---
