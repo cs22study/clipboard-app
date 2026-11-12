@@ -1,4 +1,4 @@
-const CACHE_NAME = 'padlet-wall-app-v2.2';
+const CACHE_NAME = 'padlet-wall-app-v2.3';
 const urlsToCache = [
   './',
   './index.html',

@@ -714,7 +714,7 @@
             </div>
 
             <!-- 登入表單 -->
-            <form id="formLogin" class="admin-tab-content active" autocomplete="on" onsubmit="event.preventDefault(); document.getElementById('btnSubmitLogin').click();">
+            <form id="tabLogin" class="admin-tab-content active" autocomplete="on" onsubmit="event.preventDefault(); document.getElementById('btnSubmitLogin').click();">
                 <div class="form-group">
                     <label for="loginUsername">使用者帳號：</label>
                     <input type="text" id="loginUsername" name="username" autocomplete="username" placeholder="輸入帳號 (例如: admin, user_xiesong)">
@@ -727,7 +727,7 @@
             </form>
 
             <!-- 註冊表單 -->
-            <form id="formRegister" class="admin-tab-content" autocomplete="off" onsubmit="event.preventDefault(); document.getElementById('btnSubmitRegister').click();">
+            <form id="tabRegister" class="admin-tab-content" autocomplete="off" onsubmit="event.preventDefault(); document.getElementById('btnSubmitRegister').click();">
                 <p style="font-size: 0.82rem; color: #666; margin-bottom: 12px;">註冊後系統將在試算表中自動為您建立專屬分頁，與他人完全隔離獨立！</p>
                 <div class="form-group">
                     <label for="regUsername">自訂帳號 (英數字)：</label>
@@ -1113,6 +1113,7 @@
         };
 
         userStatusPill.onclick = () => {
+            switchUserAuthTab('tabLogin');
             document.getElementById('modalUserAuth').classList.add('show');
         };
 
@@ -1120,12 +1121,16 @@
             document.querySelectorAll('#modalUserAuth .admin-tab-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('#modalUserAuth .admin-tab-content').forEach(c => c.classList.remove('active'));
 
-            if (tabId === 'tabLogin') {
-                document.querySelector('#modalUserAuth .admin-tab-btn:nth-child(1)').classList.add('active');
-                document.getElementById('tabLogin').classList.add('active');
+            if (tabId === 'tabLogin' || tabId === 'formLogin') {
+                const btn = document.querySelector('#modalUserAuth .admin-tab-btn:nth-child(1)');
+                if (btn) btn.classList.add('active');
+                const target = document.getElementById('tabLogin') || document.getElementById('formLogin');
+                if (target) target.classList.add('active');
             } else {
-                document.querySelector('#modalUserAuth .admin-tab-btn:nth-child(2)').classList.add('active');
-                document.getElementById('tabRegister').classList.add('active');
+                const btn = document.querySelector('#modalUserAuth .admin-tab-btn:nth-child(2)');
+                if (btn) btn.classList.add('active');
+                const target = document.getElementById('tabRegister') || document.getElementById('formRegister');
+                if (target) target.classList.add('active');
             }
         };
 
