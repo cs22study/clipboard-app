@@ -26,9 +26,12 @@
 
 - **作業系統**：Windows 11 (PowerShell 7 / Windows PowerShell 5.1)
 - **Node.js 版本**：Node.js LTS `v26.13.1` (位於 `C:\Program Files\nodejs\node.exe`)
-- **Clasp 版本**：`@google/clasp` `v3.4.1` (全域安裝或由 Node.js 執行)
+- **Clasp 版本**：`@google/clasp` `v3.4.1` (位於 `C:\Users\user\AppData\Roaming\npm\clasp.cmd`)
 - **Git 工具**：Git for Windows (`C:\Program Files\Git\cmd\git.exe`)
 - **已綁定 Google 帳號**：`cs22study@gmail.com` (Clasp 認證權限位於 `C:\Users\user\.clasprc.json`)
+> **💡 Windows PowerShell 執行 Clasp 提示**：  
+> 若因 ExecutionPolicy 限制或 PATH 未載入，請於命令前設置：  
+> `$env:PATH = "C:\Program Files\nodejs;C:\Users\user\AppData\Roaming\npm;$env:PATH"` 並執行 `& "C:\Users\user\AppData\Roaming\npm\clasp.cmd"`。
 
 ---
 
