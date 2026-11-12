@@ -1,47 +1,56 @@
 // =============================================================================
 // 雲端記事牆 APP (Padlet 模式) - Google Apps Script (GAS) 後端核心程式
+// 支援 clasp 本機同步、專屬圖片子資料夾、試算表資料庫、雙軌密碼保護與自訂排序
 // =============================================================================
 
 // ======================== 【重要設定區】 ========================
-// 1. 指定存放上傳圖片的 Google Drive 資料夾 ID
-const FOLDER_ID = '15Bo8djCeOuhexWLi-6sjr5uqmfk7IFfN';
+// 1. 指定存放本專案所有資源的主資料夾 ID (雲端硬碟「線上筆記資料速記APP」資料夾)
+const PARENT_FOLDER_ID = '15Bo8djCeOuhexWLi-6sjr5uqmfk7IFfN';
 
-// 2. 指定 Google 試算表 ID
-// 提示：若已執行下方 setupNewDatabase() 自動建立新檔案，請將日誌中產生的全新 SHEET_ID 填入此處
+// 2. 專屬存放截圖照片的子資料夾名稱
+const PHOTO_FOLDER_NAME = '雲端記事牆資料截圖照片';
+
+// 3. 指定 Google 試算表 ID
+// 提示：執行下方 setupNewDatabase() 自動建立新檔案後，將記錄中產生的 SHEET_ID 貼入此處
 let SHEET_ID = 'YOUR_NEW_SPREADSHEET_ID';
 
-// 3. 工作表名稱
+// 4. 工作表名稱
 const SHEET_NAME = 'Padlet_Cards';
 
-// 4. 全域管理者刪除密碼 (Master PIN)
+// 5. 全域管理者刪除密碼 (Master PIN)
 // 任何卡片若忘記自訂密碼，輸入此密碼皆可授權強制刪除
 const MASTER_PIN = '8888';
 // ================================================================
 
 
 // =============================================================================
-// 🛠️ 輔助函式：自動建立全新試算表資料庫 (一鍵初始化)
+// 🛠️ 輔助函式：自動建立全新試算表資料庫與專屬照片資料夾 (一鍵初始化)
 // =============================================================================
 /**
  * 請在 GAS 編輯器選取 setupNewDatabase 函式並點擊「執行」：
- * 1. 自動在指定資料夾內建立乾淨獨立的試算表
- * 2. 自動建立 Padlet_Cards 工作表及 10 個標準欄位
- * 3. 在下方執行記錄中印出全新的 SHEET_ID，直接複製填入上方設定區即可
+ * 1. 在指定的「線上筆記資料速記APP」主資料夾中建立獨立乾淨的試算表
+ * 2. 自動在該資料夾內建立「雲端記事牆資料截圖照片」專屬子資料夾
+ * 3. 自動建立 Padlet_Cards 工作表及 10 個標準欄位與美化格式
+ * 4. 印出全新 SHEET_ID，複製填入上方設定區即可
  */
 function setupNewDatabase() {
-  Logger.log("=== 開始在指定資料夾中建立全新試算表資料庫 ===");
+  Logger.log("=== 開始在指定資料夾中初始化雲端資料庫 ===");
   try {
-    const folder = DriveApp.getFolderById(FOLDER_ID);
-    Logger.log("✅ 成功存取 Google Drive 資料夾：" + folder.getName());
+    const parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+    Logger.log("✅ 成功存取主資料夾：" + parentFolder.getName());
 
-    // 建立新試算表
+    // 1. 確保「雲端記事牆資料截圖照片」專屬子資料夾存在
+    const photoFolder = getOrCreatePhotoFolder(parentFolder);
+    Logger.log("✅ 成功確認照片儲存資料夾：" + photoFolder.getName() + " (ID: " + photoFolder.getId() + ")");
+
+    // 2. 建立新試算表資料庫
     const ss = SpreadsheetApp.create("雲端記事牆APP_Padlet資料庫");
     const file = DriveApp.getFileById(ss.getId());
     
-    // 將檔案移入指定資料夾
-    file.moveTo(folder);
+    // 將新試算表移入指定的「線上筆記資料速記APP」資料夾
+    file.moveTo(parentFolder);
 
-    // 設定工作表
+    // 3. 設定工作表 Padlet_Cards
     let sheet = ss.getSheetByName(SHEET_NAME);
     if (!sheet) {
       sheet = ss.getActiveSheet();
@@ -65,24 +74,25 @@ function setupNewDatabase() {
     sheet.clear();
     sheet.appendRow(headers);
 
-    // 美化標題列
+    // 格式化標題列
     const headerRange = sheet.getRange(1, 1, 1, headers.length);
     headerRange.setFontWeight("bold");
-    headerRange.setBackground("#4CAF50");
+    headerRange.setBackground("#2E7D32");
     headerRange.setFontColor("#FFFFFF");
     headerRange.setHorizontalAlignment("center");
     sheet.setFrozenRows(1);
 
     Logger.log("=================================================");
-    Logger.log("🎉 全新試算表資料庫建立成功！");
+    Logger.log("🎉 全新環境初始化成功！");
     Logger.log("👉 試算表名稱：" + ss.getName());
     Logger.log("👉 試算表 ID：" + ss.getId());
     Logger.log("👉 試算表網址：" + ss.getUrl());
+    Logger.log("👉 照片存放資料夾：" + photoFolder.getName());
     Logger.log("★ 請將上述「試算表 ID」複製並貼入上方 SHEET_ID 變數中，然後發布部署！");
     Logger.log("=================================================");
 
   } catch (err) {
-    Logger.log("❌ 建立失敗：" + err.toString());
+    Logger.log("❌ 初始化失敗：" + err.toString());
   }
 }
 
@@ -180,7 +190,7 @@ function getTargetSheet() {
   return sheet;
 }
 
-// 取得所有未被軟刪除的卡片
+// 取得所有未被軟刪除的有效卡片
 function getActiveCards() {
   const sheet = getTargetSheet();
   const rows = sheet.getDataRange().getValues();
@@ -188,7 +198,6 @@ function getActiveCards() {
   let cards = [];
   let topicSet = new Set();
 
-  // 從第二列開始（第一列為欄位標題）
   for (let i = 1; i < rows.length; i++) {
     const row = rows[i];
     const isDeleted = String(row[9]).toUpperCase() === 'TRUE';
@@ -204,14 +213,14 @@ function getActiveCards() {
         title: String(row[3] || ""),
         content: String(row[4] || ""),
         imageUrl: String(row[5] || ""),
-        hasPin: Boolean(row[6]), // 僅回傳是否有設定密碼，不洩漏密碼內容
+        hasPin: Boolean(row[6]),
         createdAt: row[7] ? formatDateTime(row[7]) : "",
         updatedAt: row[8] ? formatDateTime(row[8]) : ""
       });
     }
   }
 
-  // 排序：先按主題排序，同一主題內按 orderIndex 升冪排列 (1, 2, 3...)
+  // 排序：同主題內按 orderIndex 升冪排列 (1, 2, 3...)
   cards.sort((a, b) => {
     if (a.topic !== b.topic) {
       return a.topic.localeCompare(b.topic, "zh-Hant");
@@ -238,7 +247,7 @@ function handleCreatePost(data) {
     throw new Error("請至少輸入記事內容或附帶圖片！");
   }
 
-  // 處理圖片上傳
+  // 處理圖片上傳（存至「雲端記事牆資料截圖照片」資料夾）
   let fileUrl = "";
   if (base64Image && base64Image.indexOf("data:image") !== -1) {
     fileUrl = saveBase64ImageToDrive(base64Image);
@@ -307,7 +316,6 @@ function handleUpdatePost(data) {
     }
   }
 
-  // 更新最後修改時間
   sheet.getRange(targetRowIndex, 9).setValue(new Date());
 
   return jsonResponse({
@@ -339,10 +347,7 @@ function handleDeletePost(data) {
 
   if (targetRowIndex === -1) throw new Error("找不到指定的卡片");
 
-  // 密碼比對邏輯：
-  // 1. 若該卡片設有專屬密碼，輸入專屬密碼正確即可刪除
-  // 2. 若輸入全域管理員密碼 (MASTER_PIN)，無論卡片密碼為何皆可授權強制刪除
-  // 3. 若該卡片未自訂密碼，則需輸入 MASTER_PIN
+  // 密碼比對邏輯 (雙軌制)
   let isAuthorized = false;
   if (inputPin === MASTER_PIN) {
     isAuthorized = true;
@@ -357,7 +362,7 @@ function handleDeletePost(data) {
     });
   }
 
-  // 執行軟刪除 (將第 10 欄 is_deleted 設為 true)
+  // 執行軟刪除
   sheet.getRange(targetRowIndex, 10).setValue(true);
   sheet.getRange(targetRowIndex, 9).setValue(new Date());
 
@@ -390,7 +395,6 @@ function handleSwapOrder(data) {
 
   if (rowIdx1 === -1 || rowIdx2 === -1) throw new Error("找不到欲交換順序的卡片");
 
-  // 交換 order_index
   sheet.getRange(rowIdx1, 3).setValue(order2);
   sheet.getRange(rowIdx2, 3).setValue(order1);
   sheet.getRange(rowIdx1, 9).setValue(new Date());
@@ -407,7 +411,7 @@ function handleSetOrderIndex(data) {
   const sheet = getTargetSheet();
   const id = String(data.id);
   const topic = String(data.topic);
-  const targetIndex = parseInt(data.targetIndex, 10); // 1-based (例如第 1 位)
+  const targetIndex = parseInt(data.targetIndex, 10);
 
   if (isNaN(targetIndex) || targetIndex < 1) {
     throw new Error("請輸入大於 0 的有效序號");
@@ -417,12 +421,10 @@ function handleSetOrderIndex(data) {
   const cardToMove = allActive.find(c => c.id === id);
   if (!cardToMove) throw new Error("找不到指定的卡片");
 
-  // 移出原卡片，並插入到 targetIndex - 1 位置
   const filtered = allActive.filter(c => c.id !== id);
   const insertPos = Math.min(Math.max(targetIndex - 1, 0), filtered.length);
   filtered.splice(insertPos, 0, cardToMove);
 
-  // 重新指派 1..N 順序並回寫試算表
   filtered.forEach((card, idx) => {
     const newOrder = idx + 1;
     sheet.getRange(card.rowIndex, 3).setValue(newOrder);
@@ -435,8 +437,25 @@ function handleSetOrderIndex(data) {
 }
 
 // =============================================================================
-// 🖼️ 圖片儲存輔助函式 (嚴格限定於指定 FOLDER_ID)
+// 🖼️ 圖片儲存模組 (存放於「雲端記事牆資料截圖照片」資料夾)
 // =============================================================================
+
+// 取得或自動建立「雲端記事牆資料截圖照片」專屬資料夾
+function getOrCreatePhotoFolder(parentFolder) {
+  if (!parentFolder) {
+    parentFolder = DriveApp.getFolderById(PARENT_FOLDER_ID);
+  }
+  const subFolders = parentFolder.getFoldersByName(PHOTO_FOLDER_NAME);
+  if (subFolders.hasNext()) {
+    return subFolders.next();
+  } else {
+    const newFolder = parentFolder.createFolder(PHOTO_FOLDER_NAME);
+    newFolder.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+    return newFolder;
+  }
+}
+
+// 將 Base64 圖片轉檔並存入「雲端記事牆資料截圖照片」資料夾
 function saveBase64ImageToDrive(base64Data) {
   const parts = base64Data.split(",");
   const base64String = parts.length > 1 ? parts[1] : parts[0];
@@ -446,8 +465,9 @@ function saveBase64ImageToDrive(base64Data) {
     "padlet_" + new Date().getTime() + ".png"
   );
 
-  const folder = DriveApp.getFolderById(FOLDER_ID);
-  const file = folder.createFile(blob);
+  // 取得「雲端記事牆資料截圖照片」資料夾
+  const targetFolder = getOrCreatePhotoFolder();
+  const file = targetFolder.createFile(blob);
   
   // 設定權限為知道連結者可檢視
   file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
