@@ -52,6 +52,12 @@
             font-size: 1.2rem;
             font-weight: 700;
             color: var(--primary);
+            cursor: pointer;
+            user-select: none;
+            transition: opacity 0.2s;
+        }
+        .brand:hover {
+            opacity: 0.85;
         }
         .brand span.badge {
             font-size: 0.72rem;
@@ -137,6 +143,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
+            flex-wrap: wrap;
         }
         .btn {
             display: inline-flex;
@@ -658,16 +665,10 @@
 
     <!-- 頂部導覽列 -->
     <header>
-        <div class="brand">
+        <div class="brand" onclick="goToPublicHome()" title="點擊返回公用首頁">
             <span>📌</span>
             <span class="text">雲端記事牆</span>
             <span class="badge">Padlet 模式</span>
-        </div>
-
-        <!-- 使用者身分標籤 -->
-        <div class="user-status-pill" id="userStatusPill" title="點擊切換使用者帳號">
-            <span>👤</span>
-            <span id="userDisplayName">載入中...</span>
         </div>
 
         <div class="search-box">
@@ -677,11 +678,18 @@
         </div>
 
         <div class="header-actions">
+            <button class="btn btn-outline" id="btnHome" onclick="goToPublicHome()" title="返回公用首頁">🏠 首頁</button>
             <button class="btn btn-outline" id="btnRefresh" title="重新整理">🔄 整理</button>
             <button class="btn btn-outline" id="btnExport" title="一鍵匯出本記事牆備份">📥 匯出</button>
             <button class="btn btn-outline" id="btnAddTopic">➕ 主題</button>
             <button class="btn btn-primary" id="btnNewNote">➕ 新增筆記</button>
             <button class="btn btn-outline" id="btnAdmin" title="總管理者設定">⚙️ 管理</button>
+
+            <!-- 使用者身分標籤：移至管理的右側 -->
+            <div class="user-status-pill" id="userStatusPill" title="點擊切換使用者帳號">
+                <span>👤</span>
+                <span id="userDisplayName">載入中...</span>
+            </div>
         </div>
     </header>
 
@@ -738,7 +746,7 @@
 
             <div class="modal-footer" style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
                 <button type="button" class="btn btn-outline" id="btnLogoutUser" style="display: none;" onclick="logoutUser()">🚪 登出帳號</button>
-                <button type="button" class="btn btn-outline" onclick="closeAllModals()">暫以訪客瀏覽</button>
+                <button type="button" class="btn btn-outline" onclick="switchGuestMode()">暫以訪客瀏覽</button>
             </div>
         </div>
     </div>
@@ -1030,22 +1038,38 @@
             updateUserBadgeUI();
         }
 
-        function getCustomTopicsStorageKey() {
-            return 'padlet_custom_topics_' + (currentUser ? currentUser.sheetName : 'default');
+        function getPendingEmptyTopicsKey() {
+            return 'padlet_pending_empty_topics_' + (currentUser ? currentUser.sheetName : 'default');
         }
 
-        function saveCustomTopics() {
-            const key = getCustomTopicsStorageKey();
-            localStorage.setItem(key, JSON.stringify(boardTopics));
-        }
-
-        function loadCustomTopics() {
-            const key = getCustomTopicsStorageKey();
+        function getPendingEmptyTopics() {
+            // 公開訪客牆不保留未發布卡片的暫存主題，完全以試算表真實資料為準
+            if (!currentUser || currentUser.role === 'guest') return [];
             try {
-                return JSON.parse(localStorage.getItem(key) || '[]');
+                return JSON.parse(localStorage.getItem(getPendingEmptyTopicsKey()) || '[]');
             } catch (e) {
                 return [];
             }
+        }
+
+        function savePendingEmptyTopics(topics) {
+            if (!currentUser || currentUser.role === 'guest') return;
+            localStorage.setItem(getPendingEmptyTopicsKey(), JSON.stringify(topics));
+        }
+
+        function addPendingEmptyTopic(topicName) {
+            if (!currentUser || currentUser.role === 'guest') return;
+            let list = getPendingEmptyTopics();
+            if (!list.includes(topicName)) {
+                list.push(topicName);
+                savePendingEmptyTopics(list);
+            }
+        }
+
+        function removePendingEmptyTopic(topicName) {
+            let list = getPendingEmptyTopics();
+            list = list.filter(t => t !== topicName);
+            savePendingEmptyTopics(list);
         }
 
         function updateUserBadgeUI() {
@@ -1062,22 +1086,30 @@
             }
         }
 
-        window.logoutUser = function() {
-            localStorage.removeItem('padlet_user_session');
+        window.goToPublicHome = function() {
+            if (searchInput) {
+                searchInput.value = '';
+                updateSearchClearBtn();
+            }
             currentUser = {
                 username: 'default',
                 displayName: '公開記事牆',
                 sheetName: 'Padlet_Cards',
                 role: 'guest'
             };
+            localStorage.removeItem('padlet_user_session');
             updateUserBadgeUI();
-            if (searchInput) {
-                searchInput.value = '';
-                updateSearchClearBtn();
-            }
             closeAllModals();
-            showToast('已登出，已返回公開記事牆', 'info');
+            showToast('已切換回公用首頁', 'info');
             loadBoardData();
+        };
+
+        window.switchGuestMode = function() {
+            goToPublicHome();
+        };
+
+        window.logoutUser = function() {
+            goToPublicHome();
         };
 
         userStatusPill.onclick = () => {
@@ -1199,15 +1231,17 @@
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    // 合併後端主題與本地快取主題（依據 currentUser.sheetName 獨立隔離）
-                    const localTopics = loadCustomTopics();
                     const serverTopics = result.topics || [];
-                    const mergedTopics = [...new Set([...serverTopics, ...localTopics])];
+                    let pendingTopics = getPendingEmptyTopics();
+                    // 若 pendingTopics 已經在 serverTopics 內（即已發布卡片），自 pending 移除
+                    pendingTopics = pendingTopics.filter(t => !serverTopics.includes(t));
+                    savePendingEmptyTopics(pendingTopics);
+
+                    const mergedTopics = [...new Set([...serverTopics, ...pendingTopics])];
                     if (mergedTopics.length === 0) {
                         mergedTopics.push('一般記事');
                     }
                     boardTopics = mergedTopics;
-                    saveCustomTopics();
 
                     boardCards = result.cards || [];
                     renderBoard();
@@ -1346,7 +1380,7 @@
         window.removeEmptyTopic = function(topic) {
             if (!confirm(`確定要刪除空白主題【${topic}】嗎？`)) return;
             boardTopics = boardTopics.filter(t => t !== topic);
-            saveCustomTopics();
+            removePendingEmptyTopic(topic);
             renderBoard();
             showToast(`已移除主題【${topic}】`);
         };
@@ -2005,13 +2039,11 @@
                 updateSearchClearBtn();
             }
 
-            // 2. 加入主題清單
+            // 2. 加入主題清單與待定空主題清單
             if (!boardTopics.includes(name)) {
                 boardTopics.push(name);
             }
-
-            // 3. 儲存至本地使用者隔離快取
-            saveCustomTopics();
+            addPendingEmptyTopic(name);
 
             // 4. 即時關閉彈窗並更新看板畫面
             closeAllModals();
@@ -2081,6 +2113,15 @@
         }
 
         // 初始啟動
+        try {
+            // 清理舊版本快取中的殭屍主題，避免已自試算表刪除的主題殘留
+            Object.keys(localStorage).forEach(k => {
+                if (k.startsWith('padlet_custom_topics_')) {
+                    localStorage.removeItem(k);
+                }
+            });
+        } catch (e) {}
+
         if (searchInput) {
             searchInput.value = '';
             updateSearchClearBtn();
