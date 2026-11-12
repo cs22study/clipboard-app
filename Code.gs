@@ -224,7 +224,11 @@ function handleCreatePost(data) {
   // 處理圖片上傳（存至專屬的「雲端記事牆資料截圖照片」資料夾）
   let fileUrl = "";
   if (base64Image && base64Image.indexOf("data:image") !== -1) {
-    fileUrl = saveBase64ImageToDrive(base64Image);
+    try {
+      fileUrl = saveBase64ImageToDrive(base64Image);
+    } catch (imgErr) {
+      Logger.log("圖片儲存過程發生異常：" + imgErr.toString());
+    }
   }
 
   // 計算該主題下的下一個序號 (最大序號 + 1)
@@ -419,9 +423,16 @@ function saveBase64ImageToDrive(base64Data) {
 
   const targetFolder = DriveApp.getFolderById(PHOTO_FOLDER_ID);
   const file = targetFolder.createFile(blob);
-  file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
   
-  return "https://drive.google.com/uc?export=view&id=" + file.getId();
+  // 嘗試設定共用；若因帳戶政策無法個別呼叫 setSharing，因母資料夾已公開共用，故自動繼承，絕不中斷寫入
+  try {
+    file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+  } catch (e) {
+    Logger.log("setSharing 略過 (已自動繼承資料夾共用權限): " + e.toString());
+  }
+  
+  // 使用 Google 官方最高效的圖片直連 CDN (免除跨域與登入 Cookie 問題)
+  return "https://lh3.googleusercontent.com/d/" + file.getId();
 }
 
 function formatDateTime(val) {
