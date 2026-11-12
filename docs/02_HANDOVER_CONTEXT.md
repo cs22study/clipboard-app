@@ -1,6 +1,8 @@
 # 跨 Session 交接文件 (Handover Context)
 
 > **建立時間**：2026-11-12  
+> **最新交接更新**：2026-11-12 16:16 (Hotfix #01 ~ #06 線上維運完成全數驗證通過)  
+> **當前系統版本**：v2.4.0 (PWA 快取：`padlet-wall-app-v2.4`，Git Commit：`8d82c60`)  
 > **適用場景**：新開對話視窗 (Fresh Session) 啟動、換機交接、切換 Google 帳號或維運交棒時閱讀。  
 > **核心目標**：3 分鐘內完整對齊技術環境狀態，免除摸索與上下文重新理解成本。
 
@@ -94,11 +96,11 @@ clasp deploy -i "AKfycbznuGd3oq8QhzY4av8deOdNUS-f9b-r_fDqMPZl0DnXIIOEd4Ca5KlfqPZ
   - 預設管理密碼 (Master PIN)：`8888`
   - 存放位置：`Admin_Settings` 試算表 `master_pin` 鍵值，可於後台直接更改。
 - **測試使用者 (Demo User)**：
-  - 帳號：`user_xiesong`
-  - 密碼：`1234`
-  - 專屬隔離工作表：`Cards_user_xiesong`
+  - 帳號：`user_xiesong`，密碼：`1234`，專屬工作表：`Cards_user_xiesong`
+  - 帳號：`song001`，專屬工作表：`Cards_song001`
+  - 帳號：`song002`，專屬工作表：`Cards_song002`
 - **訪客模式 (Guest)**：
-  - 未登入時操作的工作表：`Padlet_Cards` (公開牆)
+  - 未登入或檢視公用牆時操作的工作表：`Padlet_Cards` (公開牆)
 
 ---
 
@@ -109,3 +111,29 @@ clasp deploy -i "AKfycbznuGd3oq8QhzY4av8deOdNUS-f9b-r_fDqMPZl0DnXIIOEd4Ca5KlfqPZ
    - **正確做法**：讓上傳之圖片自然繼承「雲端記事牆資料截圖照片」資料夾之共享權限，並透過全球 CDN 網址格式 `https://lh3.googleusercontent.com/d/{fileId}` 進行跨域讀取。
 2. **多租戶表格自動修復**：
    - `resolveSheetForUser(username)` 內部內建自我修復邏輯。若使用者分頁意外被刪除，後端在下一次請求時會自動以預設 13 欄規格重建該分頁，不會造成系統崩潰。
+3. **瀏覽器密碼管理器自動誤填 (Autofill Heuristic 防禦)**：
+   - Chromium / Safari 等密碼管理器會自動搜尋首個文字輸入欄位並注入帳號密碼。本專案採「頂端隱形誘餌欄位」+「搜尋框 readonly 聚焦解除」+「定時/渲染前防禦檢查」三重防護，杜絕搜尋列污染。
+4. **雙首頁切換與 Session 保留**：
+   - 使用者登入後，頂部提供 `🌐 公用首頁` 與 `👤 個人首頁` 雙切換按鈕。切換至公用首頁時不得清空 `localStorage['padlet_user_session']`，僅有明確點選「🚪 登出帳號」時才進行憑證註銷。
+
+---
+
+## 7. 線上維運與 Hotfix 處置總結 (Hotfix #01 ~ #06)
+
+| 序號 | 類別 | 現象與問題描述 | 根因與處置方針 | 狀態 |
+| :---: | :---: | :--- | :--- | :---: |
+| **01** | 後端權限 | 新增附圖筆記時後端拋出 `存取遭拒：DriveApp` | `file.setSharing` 於特定目錄被阻擋；改用 CDN 網址繼承資料夾權限 | ✅ 已結案 (`2ec4829`) |
+| **02** | 工具鏈 | 本機執行 clasp 命令被 ExecutionPolicy 阻擋 | PowerShell 限制執行 `.ps1` 腳本；改採 `clasp.cmd` 直接執行 | ✅ 已結案 (`c66b9ef`) |
+| **03** | 前端過濾 | 新使用者新增主題後畫面未即時顯示、看板空白 | 帳號被自動填入搜尋框過濾所有內容；隔離欄位並建置使用者隔離快取 | ✅ 已結案 (`4355276`) |
+| **04** | 快取同步 | 試算表刪除資料後主題仍殘留、訪客無法返回首頁 | 舊版 localStorage 快取殘留；移除殭屍快取並新增一鍵回首頁機制 | ✅ 已結案 (`d6213de`) |
+| **05** | 註冊介面 | 多使用者彈窗切換至註冊新空間時表單空白無法填寫 | form ID 變更後與 tab 切換 ID 不一致拋出 TypeError；補齊容錯對齊 | ✅ 已結案 (`42f05d1`) |
+| **06** | 導覽防禦 | 畫面偶發跳至新增主題且卡住；登入後按首頁跳回公用牆強制登出 | 密碼管理器填入帳號致看板過濾為 0 僅留新增主題框；改採雙首頁無縫切換機制與搜尋空結果引導 | ✅ 已結案 (`8d82c60`) |
+
+---
+
+## 8. 下一階段功能開發交接指引 (Next Session Kickoff)
+
+接棒的 AI 助手或開發人員可直接自 `docs/05_TODO_LIST.md` 中的 **Phase 4** 優先項目開展：
+1. **HTML5 拖曳排序模組 (Drag & Drop Engine)**：同欄位上下排序與跨欄位主題轉移。
+2. **前端 Canvas WebP 圖片智慧壓縮**：於客戶端直接將貼上或選取之大圖壓縮為 WebP，節省 Drive 儲存空間。
+3. **即時模糊搜尋與標籤點擊快篩**：高亮文字匹配與 `#tag` 標籤點擊直達。
