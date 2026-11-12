@@ -163,6 +163,48 @@
         .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
         .btn-outline:hover { background: #ECEFF1; }
 
+        .nav-toggle-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 7px 14px;
+            border-radius: 20px;
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid var(--border);
+            background: #FFFFFF;
+            color: var(--text-main);
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .nav-toggle-btn:hover {
+            background: #F5F5F5;
+            border-color: var(--primary);
+        }
+        .nav-toggle-btn.active {
+            background: var(--primary);
+            color: #FFFFFF;
+            border-color: var(--primary);
+            box-shadow: 0 2px 6px rgba(46, 125, 50, 0.3);
+        }
+
+        .search-empty-state {
+            margin: 60px auto;
+            text-align: center;
+            background: #FFFFFF;
+            padding: 40px 30px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            max-width: 460px;
+            animation: fadeIn 0.3s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* ================= Padlet 看板區域 (Shelf Columns) ================= */
         .board-container {
             flex: 1;
@@ -663,22 +705,31 @@
 </head>
 <body>
 
+    <!-- 誘餌表單：專門吸收瀏覽器密碼管理器的自動填入，杜絕污染搜尋列 -->
+    <div style="position: absolute; left: -9999px; top: -9999px; width: 1px; height: 1px; overflow: hidden;" aria-hidden="true">
+        <input type="text" name="decoy_username_prevent_autofill" tabindex="-1" autocomplete="username">
+        <input type="password" name="decoy_password_prevent_autofill" tabindex="-1" autocomplete="current-password">
+    </div>
+
     <!-- 頂部導覽列 -->
     <header>
-        <div class="brand" onclick="goToPublicHome()" title="點擊返回公用首頁">
+        <div class="brand" onclick="switchViewMode('public')" title="點擊返回公用首頁">
             <span>📌</span>
             <span class="text">雲端記事牆</span>
             <span class="badge">Padlet 模式</span>
         </div>
 
-        <div class="search-box">
+        <form class="search-box" role="search" action="javascript:void(0)" autocomplete="off" onsubmit="event.preventDefault();">
             <span class="search-icon">🔍</span>
-            <input type="search" id="searchInput" name="board_search_q" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="搜尋主題、標題或記事內容...">
+            <input type="search" id="searchInput" name="board_search_query_filter" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="搜尋主題、標題或記事內容..." readonly onfocus="this.removeAttribute('readonly');" onblur="if(!this.value) this.setAttribute('readonly', 'readonly');">
             <button type="button" class="search-clear-btn" id="btnSearchClear" title="清除搜尋">✖</button>
-        </div>
+        </form>
 
         <div class="header-actions">
-            <button class="btn btn-outline" id="btnHome" onclick="goToPublicHome()" title="返回公用首頁">🏠 首頁</button>
+            <!-- 雙首頁切換導覽按鈕 -->
+            <button class="nav-toggle-btn active" id="btnPublicHome" onclick="switchViewMode('public')" title="切換至公用記事牆">🌐 公用首頁</button>
+            <button class="nav-toggle-btn" id="btnPersonalHome" onclick="switchViewMode('personal')" title="切換至我的個人空間" style="display: none;">👤 個人首頁</button>
+
             <button class="btn btn-outline" id="btnRefresh" title="重新整理">🔄 整理</button>
             <button class="btn btn-outline" id="btnExport" title="一鍵匯出本記事牆備份">📥 匯出</button>
             <button class="btn btn-outline" id="btnAddTopic">➕ 主題</button>
@@ -999,7 +1050,9 @@
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbznuGd3oq8QhzY4av8deOdNUS-f9b-r_fDqMPZl0DnXIIOEd4Ca5KlfqPZGlJmsVqM10g/exec';
 
         // 全域狀態管理
-        let currentUser = null; // { username, displayName, sheetName, role }
+        let loggedInAccount = null; // 儲存已登入的使用者帳號資訊
+        let currentViewMode = 'public'; // 當前檢視模式：'public' (公用首頁) | 'personal' (個人首頁)
+        let currentUser = null; // 當前看板操作上下文 { username, displayName, sheetName, role }
         let boardTopics = [];
         let boardCards = [];
         let currentNewImageBase64 = null;
@@ -1018,16 +1071,42 @@
         const userStatusPill = document.getElementById('userStatusPill');
         const userDisplayName = document.getElementById('userDisplayName');
 
+        // ================= 0. 防禦瀏覽器自動填入污染搜尋框 =================
+        function preventSearchAutofill() {
+            if (!searchInput) return;
+            // 若當前游標未聚焦於搜尋框，且有填入值時，檢驗是否為帳號名稱自動填入
+            if (document.activeElement !== searchInput && searchInput.value) {
+                const val = searchInput.value.trim();
+                const isUsernamePattern = /^(song\d+|user_\w+|admin|test\w*)$/i.test(val);
+                const isMatchingUser = loggedInAccount && (
+                    val.toLowerCase() === (loggedInAccount.username || '').toLowerCase() ||
+                    val.toLowerCase() === (loggedInAccount.displayName || '').toLowerCase()
+                );
+                if (isUsernamePattern || isMatchingUser) {
+                    searchInput.value = '';
+                    updateSearchClearBtn();
+                }
+            }
+        }
+
         // ================= 1. 使用者 Session 初始化 =================
         function initUserSession() {
             const saved = localStorage.getItem('padlet_user_session');
             if (saved) {
                 try {
-                    currentUser = JSON.parse(saved);
-                } catch (e) { currentUser = null; }
+                    loggedInAccount = JSON.parse(saved);
+                } catch (e) {
+                    loggedInAccount = null;
+                }
             }
-            if (!currentUser) {
-                // 預設為公開訪客 / Padlet_Cards 空間
+
+            if (loggedInAccount) {
+                // 已有登入狀態：預設檢視個人的專屬記事牆
+                currentViewMode = 'personal';
+                currentUser = Object.assign({}, loggedInAccount);
+            } else {
+                // 訪客狀態：預設檢視公用記事牆
+                currentViewMode = 'public';
                 currentUser = {
                     username: 'default',
                     displayName: '公開記事牆',
@@ -1035,8 +1114,107 @@
                     role: 'guest'
                 };
             }
+            updateNavButtonsUI();
             updateUserBadgeUI();
         }
+
+        function updateNavButtonsUI() {
+            const btnPublic = document.getElementById('btnPublicHome');
+            const btnPersonal = document.getElementById('btnPersonalHome');
+            if (!btnPublic || !btnPersonal) return;
+
+            if (loggedInAccount) {
+                btnPersonal.style.display = 'inline-flex';
+                btnPersonal.innerHTML = `👤 ${escapeHtml(loggedInAccount.displayName || loggedInAccount.username)} 首頁`;
+                if (currentViewMode === 'personal') {
+                    btnPersonal.classList.add('active');
+                    btnPublic.classList.remove('active');
+                } else {
+                    btnPublic.classList.add('active');
+                    btnPersonal.classList.remove('active');
+                }
+            } else {
+                btnPersonal.style.display = 'none';
+                btnPublic.classList.add('active');
+                btnPersonal.classList.remove('active');
+            }
+        }
+
+        function updateUserBadgeUI() {
+            const logoutBtn = document.getElementById('btnLogoutUser');
+            if (loggedInAccount) {
+                const tag = currentViewMode === 'personal' ? '個人空間' : '公開檢視中';
+                if (loggedInAccount.role === 'admin') {
+                    userDisplayName.innerText = `👑 ${loggedInAccount.displayName || loggedInAccount.username} (${tag})`;
+                } else {
+                    userDisplayName.innerText = `👤 ${loggedInAccount.displayName || loggedInAccount.username} (${tag})`;
+                }
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            } else {
+                userDisplayName.innerText = `🌐 公開記事牆 [點此登入]`;
+                if (logoutBtn) logoutBtn.style.display = 'none';
+            }
+        }
+
+        // 雙首頁切換核心：在公用首頁與個人首頁之間無縫切換，保留登入憑證
+        window.switchViewMode = function(mode) {
+            if (searchInput) {
+                searchInput.value = '';
+                updateSearchClearBtn();
+            }
+
+            if (mode === 'personal') {
+                if (!loggedInAccount) {
+                    // 若尚未登入，導引開啟登入視窗
+                    switchUserAuthTab('tabLogin');
+                    document.getElementById('modalUserAuth').classList.add('show');
+                    return;
+                }
+                currentViewMode = 'personal';
+                currentUser = Object.assign({}, loggedInAccount);
+                showToast(`已切換至【${currentUser.displayName || currentUser.username}】個人記事牆`, 'info');
+            } else {
+                // public 模式
+                currentViewMode = 'public';
+                currentUser = {
+                    username: 'default',
+                    displayName: '公開記事牆',
+                    sheetName: 'Padlet_Cards',
+                    role: 'guest'
+                };
+                showToast('已切換至【公用記事牆】', 'info');
+            }
+
+            updateNavButtonsUI();
+            updateUserBadgeUI();
+            closeAllModals();
+            loadBoardData();
+        };
+
+        window.goToPublicHome = function() {
+            switchViewMode('public');
+        };
+
+        window.switchGuestMode = function() {
+            switchViewMode('public');
+        };
+
+        window.logoutUser = function() {
+            loggedInAccount = null;
+            currentViewMode = 'public';
+            currentUser = {
+                username: 'default',
+                displayName: '公開記事牆',
+                sheetName: 'Padlet_Cards',
+                role: 'guest'
+            };
+            localStorage.removeItem('padlet_user_session');
+            updateNavButtonsUI();
+            updateUserBadgeUI();
+            closeAllModals();
+            showToast('已安全登出', 'info');
+            loadBoardData();
+        };
 
         function getPendingEmptyTopicsKey() {
             return 'padlet_pending_empty_topics_' + (currentUser ? currentUser.sheetName : 'default');
@@ -1071,46 +1249,6 @@
             list = list.filter(t => t !== topicName);
             savePendingEmptyTopics(list);
         }
-
-        function updateUserBadgeUI() {
-            const logoutBtn = document.getElementById('btnLogoutUser');
-            if (currentUser.role === 'admin') {
-                userDisplayName.innerText = `👑 ${currentUser.displayName}`;
-                if (logoutBtn) logoutBtn.style.display = 'inline-block';
-            } else if (currentUser.role === 'guest') {
-                userDisplayName.innerText = `🌐 ${currentUser.displayName} [點此登入]`;
-                if (logoutBtn) logoutBtn.style.display = 'none';
-            } else {
-                userDisplayName.innerText = `👤 ${currentUser.displayName}`;
-                if (logoutBtn) logoutBtn.style.display = 'inline-block';
-            }
-        }
-
-        window.goToPublicHome = function() {
-            if (searchInput) {
-                searchInput.value = '';
-                updateSearchClearBtn();
-            }
-            currentUser = {
-                username: 'default',
-                displayName: '公開記事牆',
-                sheetName: 'Padlet_Cards',
-                role: 'guest'
-            };
-            localStorage.removeItem('padlet_user_session');
-            updateUserBadgeUI();
-            closeAllModals();
-            showToast('已切換回公用首頁', 'info');
-            loadBoardData();
-        };
-
-        window.switchGuestMode = function() {
-            goToPublicHome();
-        };
-
-        window.logoutUser = function() {
-            goToPublicHome();
-        };
 
         userStatusPill.onclick = () => {
             switchUserAuthTab('tabLogin');
@@ -1149,15 +1287,18 @@
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    currentUser = result.user;
-                    localStorage.setItem('padlet_user_session', JSON.stringify(currentUser));
+                    loggedInAccount = result.user;
+                    currentViewMode = 'personal';
+                    currentUser = Object.assign({}, loggedInAccount);
+                    localStorage.setItem('padlet_user_session', JSON.stringify(loggedInAccount));
+                    updateNavButtonsUI();
                     updateUserBadgeUI();
                     if (searchInput) {
                         searchInput.value = '';
                         updateSearchClearBtn();
                     }
                     closeAllModals();
-                    showToast(`歡迎回來，${currentUser.displayName}！`, 'success');
+                    showToast(`歡迎回來，${currentUser.displayName || currentUser.username}！`, 'success');
                     await loadBoardData();
                 } else {
                     showToast(result.message, 'error');
@@ -1185,8 +1326,11 @@
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    currentUser = result.user;
-                    localStorage.setItem('padlet_user_session', JSON.stringify(currentUser));
+                    loggedInAccount = result.user;
+                    currentViewMode = 'personal';
+                    currentUser = Object.assign({}, loggedInAccount);
+                    localStorage.setItem('padlet_user_session', JSON.stringify(loggedInAccount));
+                    updateNavButtonsUI();
                     updateUserBadgeUI();
                     if (searchInput) {
                         searchInput.value = '';
@@ -1264,12 +1408,15 @@
         // ================= 3. 渲染 Padlet 貨架看板 (Shelf Columns) =================
         function renderBoard() {
             boardCanvas.innerHTML = '';
+            preventSearchAutofill();
             const keyword = searchInput.value.trim().toLowerCase();
 
             const allTopics = [...new Set([...boardTopics, ...boardCards.map(c => c.topic)])];
             if (allTopics.length === 0) {
                 allTopics.push('一般記事');
             }
+
+            let renderedTopicsCount = 0;
 
             allTopics.forEach(topic => {
                 let cardsInTopic = boardCards.filter(c => c.topic === topic);
@@ -1284,6 +1431,8 @@
                         return;
                     }
                 }
+
+                renderedTopicsCount++;
 
                 const colEl = document.createElement('div');
                 colEl.className = 'topic-column';
@@ -1367,7 +1516,22 @@
                 boardCanvas.appendChild(colEl);
             });
 
-            // 尾部快速新增主題框
+            // 若處於搜尋狀態且沒有任何卡片或主題符合關鍵字，顯示引導畫面與清除按鈕
+            if (keyword && renderedTopicsCount === 0) {
+                boardCanvas.innerHTML = `
+                    <div class="search-empty-state">
+                        <div style="font-size: 2.5rem; margin-bottom: 12px;">🔍</div>
+                        <h3 style="margin-bottom: 8px; color: var(--text-main); font-size: 1.15rem;">查無符合「${escapeHtml(keyword)}」的記事或主題</h3>
+                        <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 18px; line-height: 1.5;">
+                            當前記事牆中沒有包含此關鍵字的內容。<br>請嘗試其他關鍵字，或點擊下方按鈕清除搜尋以檢視完整看板。
+                        </p>
+                        <button class="btn btn-primary" onclick="clearSearchAndRender()" style="padding: 8px 20px;">✖ 清除搜尋條件</button>
+                    </div>
+                `;
+                return;
+            }
+
+            // 尾部快速新增主題框 (非空白搜尋時顯示)
             const addColBox = document.createElement('div');
             addColBox.className = 'add-column-box';
             addColBox.onclick = () => {
@@ -1381,6 +1545,14 @@
             `;
             boardCanvas.appendChild(addColBox);
         }
+
+        window.clearSearchAndRender = function() {
+            if (searchInput) {
+                searchInput.value = '';
+                updateSearchClearBtn();
+            }
+            renderBoard();
+        };
 
         window.removeEmptyTopic = function(topic) {
             if (!confirm(`確定要刪除空白主題【${topic}】嗎？`)) return;
@@ -2132,6 +2304,13 @@
             updateSearchClearBtn();
         }
         initUserSession();
+        preventSearchAutofill();
+        window.addEventListener('DOMContentLoaded', preventSearchAutofill);
+        window.addEventListener('load', preventSearchAutofill);
+        setTimeout(preventSearchAutofill, 100);
+        setTimeout(preventSearchAutofill, 300);
+        setTimeout(preventSearchAutofill, 600);
+        setTimeout(preventSearchAutofill, 1200);
         loadBoardData();
     </script>
 </body>
