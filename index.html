@@ -83,10 +83,12 @@
             flex: 1;
             max-width: 360px;
             position: relative;
+            display: flex;
+            align-items: center;
         }
         .search-box input {
             width: 100%;
-            padding: 7px 14px 7px 34px;
+            padding: 7px 30px 7px 34px;
             border-radius: 20px;
             border: 1px solid var(--border);
             font-size: 13.5px;
@@ -99,6 +101,29 @@
             border-color: var(--primary);
             box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
         }
+        .search-clear-btn {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #CFD8DC;
+            border: none;
+            color: #FFFFFF;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            font-size: 10px;
+            cursor: pointer;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            line-height: 1;
+            padding: 0;
+            transition: background 0.2s;
+        }
+        .search-clear-btn:hover {
+            background: #90A4AE;
+        }
         .search-icon {
             position: absolute;
             left: 11px;
@@ -106,6 +131,7 @@
             transform: translateY(-50%);
             color: var(--text-sub);
             font-size: 13px;
+            pointer-events: none;
         }
         .header-actions {
             display: flex;
@@ -190,8 +216,32 @@
             font-weight: bold;
             padding: 2px 6px;
             border-radius: 4px;
+            line-height: 1;
         }
         .col-add-btn:hover { background: var(--primary-light); }
+
+        .col-del-btn {
+            background: transparent;
+            border: none;
+            color: #9E9E9E;
+            cursor: pointer;
+            font-size: 0.88rem;
+            padding: 3px 6px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            line-height: 1;
+        }
+        .col-del-btn:hover { background: #FFEBEE; color: var(--danger); }
+
+        @keyframes highlightPulse {
+            0% { transform: scale(0.97); box-shadow: 0 0 0 0 rgba(46, 125, 50, 0.6); }
+            50% { transform: scale(1.02); box-shadow: 0 0 0 10px rgba(46, 125, 50, 0); }
+            100% { transform: scale(1); box-shadow: none; }
+        }
+        .highlight-pulse {
+            animation: highlightPulse 1.2s ease-out;
+            border-color: var(--primary) !important;
+        }
 
         .column-cards {
             flex: 1;
@@ -622,7 +672,8 @@
 
         <div class="search-box">
             <span class="search-icon">🔍</span>
-            <input type="text" id="searchInput" placeholder="搜尋主題、標題或記事內容...">
+            <input type="search" id="searchInput" name="board_search_q" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="搜尋主題、標題或記事內容...">
+            <button type="button" class="search-clear-btn" id="btnSearchClear" title="清除搜尋">✖</button>
         </div>
 
         <div class="header-actions">
@@ -655,38 +706,39 @@
             </div>
 
             <!-- 登入表單 -->
-            <div class="admin-tab-content active" id="tabLogin">
+            <form id="formLogin" class="admin-tab-content active" autocomplete="on" onsubmit="event.preventDefault(); document.getElementById('btnSubmitLogin').click();">
                 <div class="form-group">
-                    <label>使用者帳號：</label>
-                    <input type="text" id="loginUsername" placeholder="輸入帳號 (例如: admin, user_xiesong)">
+                    <label for="loginUsername">使用者帳號：</label>
+                    <input type="text" id="loginUsername" name="username" autocomplete="username" placeholder="輸入帳號 (例如: admin, user_xiesong)">
                 </div>
                 <div class="form-group">
-                    <label>密碼：</label>
-                    <input type="password" id="loginPassword" placeholder="輸入密碼 (預設 admin 密碼為 8888)">
+                    <label for="loginPassword">密碼：</label>
+                    <input type="password" id="loginPassword" name="password" autocomplete="current-password" placeholder="輸入密碼 (預設 admin 密碼為 8888)">
                 </div>
-                <button class="btn btn-primary" id="btnSubmitLogin" style="width: 100%; margin-top: 8px;">登入我的專屬看板</button>
-            </div>
+                <button type="submit" class="btn btn-primary" id="btnSubmitLogin" style="width: 100%; margin-top: 8px;">登入我的專屬看板</button>
+            </form>
 
             <!-- 註冊表單 -->
-            <div class="admin-tab-content" id="tabRegister">
+            <form id="formRegister" class="admin-tab-content" autocomplete="off" onsubmit="event.preventDefault(); document.getElementById('btnSubmitRegister').click();">
                 <p style="font-size: 0.82rem; color: #666; margin-bottom: 12px;">註冊後系統將在試算表中自動為您建立專屬分頁，與他人完全隔離獨立！</p>
                 <div class="form-group">
-                    <label>自訂帳號 (英數字)：</label>
-                    <input type="text" id="regUsername" placeholder="例如: student01, group_a">
+                    <label for="regUsername">自訂帳號 (英數字)：</label>
+                    <input type="text" id="regUsername" name="reg_username" autocomplete="off" placeholder="例如: student01, group_a">
                 </div>
                 <div class="form-group">
-                    <label>顯示稱呼：</label>
-                    <input type="text" id="regDisplayName" placeholder="例如: 小松老師、第一組">
+                    <label for="regDisplayName">顯示稱呼：</label>
+                    <input type="text" id="regDisplayName" name="reg_displayname" autocomplete="off" placeholder="例如: 小松老師、第一組">
                 </div>
                 <div class="form-group">
-                    <label>登入密碼 (至少 4 碼)：</label>
-                    <input type="password" id="regPassword" placeholder="設定您的登入密碼">
+                    <label for="regPassword">登入密碼 (至少 4 碼)：</label>
+                    <input type="password" id="regPassword" name="reg_password" autocomplete="new-password" placeholder="設定您的登入密碼">
                 </div>
-                <button class="btn btn-primary" id="btnSubmitRegister" style="width: 100%; margin-top: 8px;">立即開闢我的獨立空間</button>
-            </div>
+                <button type="submit" class="btn btn-primary" id="btnSubmitRegister" style="width: 100%; margin-top: 8px;">立即開闢我的獨立空間</button>
+            </form>
 
-            <div class="modal-footer" style="margin-top: 14px;">
-                <button class="btn btn-outline" onclick="closeAllModals()">暫以訪客瀏覽</button>
+            <div class="modal-footer" style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" class="btn btn-outline" id="btnLogoutUser" style="display: none;" onclick="logoutUser()">🚪 登出帳號</button>
+                <button type="button" class="btn btn-outline" onclick="closeAllModals()">暫以訪客瀏覽</button>
             </div>
         </div>
     </div>
@@ -837,14 +889,16 @@
     <div class="modal" id="modalAddTopic">
         <div class="modal-card" style="max-width: 360px;">
             <h3>➕ 開設新主題欄位</h3>
-            <div class="form-group">
-                <label>主題名稱：</label>
-                <input type="text" id="newTopicNameInput" placeholder="例如：課程心得、自然生態">
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-outline" onclick="closeAllModals()">取消</button>
-                <button class="btn btn-primary" id="btnSubmitNewTopic">建立主題</button>
-            </div>
+            <form onsubmit="event.preventDefault(); document.getElementById('btnSubmitNewTopic').click();">
+                <div class="form-group">
+                    <label for="newTopicNameInput">主題名稱：</label>
+                    <input type="text" id="newTopicNameInput" autocomplete="off" placeholder="例如：課程心得、自然生態">
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-outline" onclick="closeAllModals()">取消</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitNewTopic">建立主題</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -976,15 +1030,55 @@
             updateUserBadgeUI();
         }
 
-        function updateUserBadgeUI() {
-            if (currentUser.role === 'admin') {
-                userDisplayName.innerText = `👑 ${currentUser.displayName}`;
-            } else if (currentUser.role === 'guest') {
-                userDisplayName.innerText = `🌐 ${currentUser.displayName} [點此登入]`;
-            } else {
-                userDisplayName.innerText = `👤 ${currentUser.displayName}`;
+        function getCustomTopicsStorageKey() {
+            return 'padlet_custom_topics_' + (currentUser ? currentUser.sheetName : 'default');
+        }
+
+        function saveCustomTopics() {
+            const key = getCustomTopicsStorageKey();
+            localStorage.setItem(key, JSON.stringify(boardTopics));
+        }
+
+        function loadCustomTopics() {
+            const key = getCustomTopicsStorageKey();
+            try {
+                return JSON.parse(localStorage.getItem(key) || '[]');
+            } catch (e) {
+                return [];
             }
         }
+
+        function updateUserBadgeUI() {
+            const logoutBtn = document.getElementById('btnLogoutUser');
+            if (currentUser.role === 'admin') {
+                userDisplayName.innerText = `👑 ${currentUser.displayName}`;
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            } else if (currentUser.role === 'guest') {
+                userDisplayName.innerText = `🌐 ${currentUser.displayName} [點此登入]`;
+                if (logoutBtn) logoutBtn.style.display = 'none';
+            } else {
+                userDisplayName.innerText = `👤 ${currentUser.displayName}`;
+                if (logoutBtn) logoutBtn.style.display = 'inline-block';
+            }
+        }
+
+        window.logoutUser = function() {
+            localStorage.removeItem('padlet_user_session');
+            currentUser = {
+                username: 'default',
+                displayName: '公開記事牆',
+                sheetName: 'Padlet_Cards',
+                role: 'guest'
+            };
+            updateUserBadgeUI();
+            if (searchInput) {
+                searchInput.value = '';
+                updateSearchClearBtn();
+            }
+            closeAllModals();
+            showToast('已登出，已返回公開記事牆', 'info');
+            loadBoardData();
+        };
 
         userStatusPill.onclick = () => {
             document.getElementById('modalUserAuth').classList.add('show');
@@ -1021,6 +1115,10 @@
                     currentUser = result.user;
                     localStorage.setItem('padlet_user_session', JSON.stringify(currentUser));
                     updateUserBadgeUI();
+                    if (searchInput) {
+                        searchInput.value = '';
+                        updateSearchClearBtn();
+                    }
                     closeAllModals();
                     showToast(`歡迎回來，${currentUser.displayName}！`, 'success');
                     await loadBoardData();
@@ -1053,6 +1151,10 @@
                     currentUser = result.user;
                     localStorage.setItem('padlet_user_session', JSON.stringify(currentUser));
                     updateUserBadgeUI();
+                    if (searchInput) {
+                        searchInput.value = '';
+                        updateSearchClearBtn();
+                    }
                     closeAllModals();
                     showToast('🎉 專屬獨立記事牆建立成功！', 'success');
                     await loadBoardData();
@@ -1097,7 +1199,16 @@
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
-                    boardTopics = result.topics || [];
+                    // 合併後端主題與本地快取主題（依據 currentUser.sheetName 獨立隔離）
+                    const localTopics = loadCustomTopics();
+                    const serverTopics = result.topics || [];
+                    const mergedTopics = [...new Set([...serverTopics, ...localTopics])];
+                    if (mergedTopics.length === 0) {
+                        mergedTopics.push('一般記事');
+                    }
+                    boardTopics = mergedTopics;
+                    saveCustomTopics();
+
                     boardCards = result.cards || [];
                     renderBoard();
                 } else {
@@ -1137,6 +1248,9 @@
 
                 const colEl = document.createElement('div');
                 colEl.className = 'topic-column';
+                colEl.id = 'col-topic-' + encodeURIComponent(topic);
+
+                const canDelete = cardsInTopic.length === 0 && allTopics.length > 1;
 
                 colEl.innerHTML = `
                     <div class="column-header">
@@ -1144,7 +1258,10 @@
                             <span>🏷️ ${escapeHtml(topic)}</span>
                             <span class="column-count">${cardsInTopic.length}</span>
                         </div>
-                        <button class="col-add-btn" onclick="openNewCardModal('${escapeHtml(topic)}')">＋</button>
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            ${canDelete ? `<button class="col-del-btn" title="刪除此空白主題欄位" onclick="removeEmptyTopic('${escapeHtml(topic)}')">🗑️</button>` : ''}
+                            <button class="col-add-btn" onclick="openNewCardModal('${escapeHtml(topic)}')" title="在此主題新增記事">＋</button>
+                        </div>
                     </div>
                     <div class="column-cards" id="col-cards-${encodeURIComponent(topic)}"></div>
                 `;
@@ -1214,13 +1331,25 @@
             // 尾部快速新增主題框
             const addColBox = document.createElement('div');
             addColBox.className = 'add-column-box';
-            addColBox.onclick = () => document.getElementById('modalAddTopic').classList.add('show');
+            addColBox.onclick = () => {
+                document.getElementById('newTopicNameInput').value = '';
+                document.getElementById('modalAddTopic').classList.add('show');
+                setTimeout(() => document.getElementById('newTopicNameInput').focus(), 100);
+            };
             addColBox.innerHTML = `
                 <span style="font-size: 2rem;">➕</span>
                 <span>新增主題欄位</span>
             `;
             boardCanvas.appendChild(addColBox);
         }
+
+        window.removeEmptyTopic = function(topic) {
+            if (!confirm(`確定要刪除空白主題【${topic}】嗎？`)) return;
+            boardTopics = boardTopics.filter(t => t !== topic);
+            saveCustomTopics();
+            renderBoard();
+            showToast(`已移除主題【${topic}】`);
+        };
 
         // ================= 4. 色彩便利貼選擇器邏輯 =================
         function setupColorPalette(paletteId, onSelect) {
@@ -1863,15 +1992,41 @@
         document.getElementById('btnAddTopic').onclick = () => {
             document.getElementById('newTopicNameInput').value = '';
             document.getElementById('modalAddTopic').classList.add('show');
+            setTimeout(() => document.getElementById('newTopicNameInput').focus(), 100);
         };
 
         document.getElementById('btnSubmitNewTopic').onclick = () => {
             const name = document.getElementById('newTopicNameInput').value.trim();
             if (!name) { showToast('請輸入主題名稱', 'error'); return; }
-            if (!boardTopics.includes(name)) boardTopics.push(name);
+
+            // 1. 若搜尋列有內容，立即清除以避免過濾遮蔽新主題
+            if (searchInput.value) {
+                searchInput.value = '';
+                updateSearchClearBtn();
+            }
+
+            // 2. 加入主題清單
+            if (!boardTopics.includes(name)) {
+                boardTopics.push(name);
+            }
+
+            // 3. 儲存至本地使用者隔離快取
+            saveCustomTopics();
+
+            // 4. 即時關閉彈窗並更新看板畫面
             closeAllModals();
             renderBoard();
-            showToast('已新增主題【' + name + '】');
+            showToast('已新增主題【' + name + '】', 'success');
+
+            // 5. 即時聚焦滾動至新主題欄位並給予動態醒目效果
+            setTimeout(() => {
+                const targetCol = document.getElementById('col-topic-' + encodeURIComponent(name));
+                if (targetCol) {
+                    targetCol.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                    targetCol.classList.add('highlight-pulse');
+                    setTimeout(() => targetCol.classList.remove('highlight-pulse'), 1500);
+                }
+            }, 100);
         };
 
         // ================= 13. 燈箱與共用輔助 =================
@@ -1884,7 +2039,27 @@
             document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
         };
 
-        searchInput.addEventListener('input', () => renderBoard());
+        const btnSearchClear = document.getElementById('btnSearchClear');
+        function updateSearchClearBtn() {
+            if (btnSearchClear) {
+                btnSearchClear.style.display = searchInput.value ? 'flex' : 'none';
+            }
+        }
+
+        searchInput.addEventListener('input', () => {
+            updateSearchClearBtn();
+            renderBoard();
+        });
+
+        if (btnSearchClear) {
+            btnSearchClear.onclick = () => {
+                searchInput.value = '';
+                updateSearchClearBtn();
+                renderBoard();
+                searchInput.focus();
+            };
+        }
+
         document.getElementById('btnRefresh').onclick = () => loadBoardData();
         document.getElementById('btnNewNote').onclick = () => openNewCardModal();
 
@@ -1906,6 +2081,10 @@
         }
 
         // 初始啟動
+        if (searchInput) {
+            searchInput.value = '';
+            updateSearchClearBtn();
+        }
         initUserSession();
         loadBoardData();
     </script>
