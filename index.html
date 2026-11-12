@@ -3,11 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雲端記事牆 Padlet</title>
+    <title>雲端記事牆 Padlet (多使用者版)</title>
     <!-- PWA 設定 -->
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#2E7D32">
-    <link rel="apple-touch-icon" href="icon設計192_192.png">
+    <link rel="apple-touch-icon" href="icon-192.png">
     
     <style>
         :root {
@@ -36,11 +36,11 @@
         /* ================= 頂部導覽列 (Header) ================= */
         header {
             background: #FFFFFF;
-            padding: 10px 20px;
+            padding: 10px 18px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 15px;
+            gap: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
             z-index: 100;
             flex-wrap: wrap;
@@ -48,30 +48,48 @@
         .brand {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 1.25rem;
+            gap: 8px;
+            font-size: 1.2rem;
             font-weight: 700;
             color: var(--primary);
         }
         .brand span.badge {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             background: var(--primary-light);
             color: var(--primary);
-            padding: 3px 8px;
+            padding: 2px 8px;
             border-radius: 12px;
             font-weight: 600;
         }
+        .user-status-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: #F0F4F8;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #37474F;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .user-status-pill:hover {
+            background: #ECEFF1;
+            border-color: var(--primary);
+        }
         .search-box {
             flex: 1;
-            max-width: 420px;
+            max-width: 360px;
             position: relative;
         }
         .search-box input {
             width: 100%;
-            padding: 8px 14px 8px 36px;
+            padding: 7px 14px 7px 34px;
             border-radius: 20px;
             border: 1px solid var(--border);
-            font-size: 14px;
+            font-size: 13.5px;
             outline: none;
             background: #FAFAFA;
             transition: all 0.2s;
@@ -83,28 +101,29 @@
         }
         .search-icon {
             position: absolute;
-            left: 12px;
+            left: 11px;
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-sub);
-            font-size: 14px;
+            font-size: 13px;
         }
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
         }
         .btn {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 8px 16px;
+            gap: 5px;
+            padding: 7px 14px;
             border-radius: 20px;
             border: none;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13.5px;
             font-weight: 600;
             transition: all 0.2s;
+            white-space: nowrap;
         }
         .btn-primary { background: var(--primary); color: #FFF; }
         .btn-primary:hover { background: var(--primary-hover); }
@@ -116,21 +135,20 @@
             flex: 1;
             overflow-x: auto;
             overflow-y: hidden;
-            padding: 20px;
+            padding: 18px;
             display: flex;
-            gap: 20px;
+            gap: 18px;
             align-items: flex-start;
         }
-        .board-container::-webkit-scrollbar { height: 10px; }
+        .board-container::-webkit-scrollbar { height: 9px; }
         .board-container::-webkit-scrollbar-thumb { background: #B0BEC5; border-radius: 5px; }
 
-        /* 主題直列看板 (Column) */
         .topic-column {
             background: var(--bg-column);
             width: 320px;
             min-width: 300px;
             max-width: 360px;
-            max-height: calc(100vh - 100px);
+            max-height: calc(100vh - 90px);
             border-radius: var(--radius-md);
             display: flex;
             flex-direction: column;
@@ -150,11 +168,11 @@
         }
         .column-title {
             font-weight: 700;
-            font-size: 1rem;
+            font-size: 0.98rem;
             color: var(--text-main);
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 7px;
         }
         .column-count {
             font-size: 0.75rem;
@@ -175,7 +193,6 @@
         }
         .col-add-btn:hover { background: var(--primary-light); }
 
-        /* 直列卡片列表 */
         .column-cards {
             flex: 1;
             overflow-y: auto;
@@ -191,7 +208,7 @@
             text-align: center;
             padding: 30px 10px;
             color: var(--text-sub);
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             border: 2px dashed #CFD8DC;
             border-radius: var(--radius-sm);
             background: #FAFAFA;
@@ -213,41 +230,61 @@
             transform: translateY(-2px);
             box-shadow: var(--shadow-md);
         }
+        .card.is-pinned {
+            border: 2px solid #FFB74D;
+            box-shadow: 0 4px 12px rgba(255, 152, 0, 0.15);
+        }
         .card-top {
             display: flex;
             align-items: center;
             justify-content: space-between;
             margin-bottom: 8px;
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+        .card-top-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
         }
         .card-order-badge {
-            font-size: 0.75rem;
+            font-size: 0.72rem;
             background: #E3F2FD;
             color: #1976D2;
-            padding: 2px 8px;
-            border-radius: 12px;
+            padding: 2px 7px;
+            border-radius: 10px;
+            font-weight: 700;
+        }
+        .card-pinned-badge {
+            font-size: 0.72rem;
+            background: #FFF3E0;
+            color: #E65100;
+            padding: 2px 7px;
+            border-radius: 10px;
             font-weight: 700;
         }
         .card-actions {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 3px;
         }
         .action-icon-btn {
             background: transparent;
             border: none;
             cursor: pointer;
             color: var(--text-sub);
-            padding: 4px;
+            padding: 4px 5px;
             border-radius: 4px;
-            font-size: 0.9rem;
+            font-size: 0.88rem;
             line-height: 1;
             transition: color 0.15s, background 0.15s;
         }
-        .action-icon-btn:hover { background: #ECEFF1; color: var(--text-main); }
+        .action-icon-btn:hover { background: rgba(0,0,0,0.06); color: var(--text-main); }
         .action-icon-btn.btn-del:hover { background: #FFEBEE; color: var(--danger); }
+        .action-icon-btn.btn-pin.active { color: #E65100; font-weight: bold; }
 
         .card-title {
-            font-size: 1rem;
+            font-size: 0.98rem;
             font-weight: 700;
             color: var(--text-main);
             margin-bottom: 6px;
@@ -266,7 +303,7 @@
         .card-img:hover { opacity: 0.92; }
 
         .card-content {
-            font-size: 0.92rem;
+            font-size: 0.91rem;
             line-height: 1.55;
             color: #37474F;
             white-space: pre-wrap;
@@ -274,16 +311,33 @@
         }
         .card-footer {
             margin-top: 10px;
-            font-size: 0.75rem;
+            font-size: 0.74rem;
             color: var(--text-sub);
             display: flex;
             justify-content: space-between;
             align-items: center;
             padding-top: 6px;
-            border-top: 1px solid #F0F0F0;
+            border-top: 1px solid rgba(0,0,0,0.06);
+        }
+        .btn-like {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: #E91E63;
+            font-size: 0.85rem;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border-radius: 12px;
+            transition: all 0.15s;
+        }
+        .btn-like:hover {
+            background: rgba(233, 30, 99, 0.12);
+            transform: scale(1.08);
         }
 
-        /* 快速新增主題按鈕欄 */
         .add-column-box {
             width: 260px;
             min-width: 240px;
@@ -305,6 +359,27 @@
             background: #FFFFFF;
             border-color: var(--primary);
             color: var(--primary);
+        }
+
+        /* 便利貼顏色選取器 */
+        .color-palette {
+            display: flex;
+            gap: 10px;
+            margin-top: 6px;
+            align-items: center;
+        }
+        .color-dot {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid #CFD8DC;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+        .color-dot.active {
+            border-color: var(--primary);
+            transform: scale(1.2);
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
         }
 
         /* ================= 彈出視窗 (Modal) ================= */
@@ -356,7 +431,7 @@
         }
         .form-group input, .form-group textarea, .form-group select {
             width: 100%;
-            padding: 10px 12px;
+            padding: 9px 12px;
             border: 1px solid var(--border);
             border-radius: var(--radius-sm);
             font-size: 14px;
@@ -369,8 +444,8 @@
         }
         .preview-box {
             width: 100%;
-            min-height: 120px;
-            max-height: 200px;
+            min-height: 110px;
+            max-height: 190px;
             border: 2px dashed var(--border);
             border-radius: var(--radius-sm);
             display: flex;
@@ -385,7 +460,7 @@
         }
         .preview-box img {
             max-width: 100%;
-            max-height: 180px;
+            max-height: 170px;
             border-radius: 4px;
         }
         .preview-remove-btn {
@@ -406,7 +481,54 @@
             margin-top: 20px;
         }
 
-        /* 圖片放大檢視 (Lightbox) */
+        /* 標籤導覽列 (Tabs) */
+        .admin-tabs {
+            display: flex;
+            gap: 6px;
+            border-bottom: 2px solid #ECEFF1;
+            margin-bottom: 16px;
+            overflow-x: auto;
+        }
+        .admin-tab-btn {
+            padding: 8px 14px;
+            background: transparent;
+            border: none;
+            font-weight: 600;
+            font-size: 0.88rem;
+            cursor: pointer;
+            color: var(--text-sub);
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .admin-tab-btn.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+        .admin-tab-content { display: none; }
+        .admin-tab-content.active { display: block; }
+        .trash-list {
+            max-height: 280px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .trash-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #F5F7F8;
+            padding: 10px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid #ECEFF1;
+            gap: 8px;
+        }
+        .trash-item-title { font-weight: 700; font-size: 0.92rem; margin-bottom: 2px; }
+        .trash-item-sub { font-size: 0.76rem; color: var(--text-sub); }
+
+        /* 圖片燈箱 */
         .lightbox-modal {
             display: none;
             position: fixed;
@@ -474,57 +596,11 @@
         }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* 管理者面板分頁樣式 */
-        .admin-tabs {
-            display: flex;
-            gap: 6px;
-            border-bottom: 2px solid #ECEFF1;
-            margin-bottom: 16px;
-            overflow-x: auto;
-        }
-        .admin-tab-btn {
-            padding: 8px 14px;
-            background: transparent;
-            border: none;
-            font-weight: 600;
-            font-size: 0.9rem;
-            cursor: pointer;
-            color: var(--text-sub);
-            border-bottom: 2px solid transparent;
-            margin-bottom: -2px;
-            white-space: nowrap;
-            transition: all 0.2s;
-        }
-        .admin-tab-btn.active {
-            color: var(--primary);
-            border-bottom-color: var(--primary);
-        }
-        .admin-tab-content { display: none; }
-        .admin-tab-content.active { display: block; }
-        .trash-list {
-            max-height: 280px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .trash-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            background: #F5F7F8;
-            padding: 10px 14px;
-            border-radius: var(--radius-sm);
-            border: 1px solid #ECEFF1;
-            gap: 10px;
-        }
-        .trash-item-title { font-weight: 700; font-size: 0.95rem; margin-bottom: 2px; }
-        .trash-item-sub { font-size: 0.78rem; color: var(--text-sub); }
-
-        @media (max-width: 640px) {
+        @media (max-width: 680px) {
             header { padding: 8px 12px; }
             .brand span.text { display: none; }
             .topic-column { width: 85vw; min-width: 85vw; }
+            .search-box { order: 3; max-width: 100%; flex: 1 1 100%; margin-top: 6px; }
         }
     </style>
 </head>
@@ -538,6 +614,12 @@
             <span class="badge">Padlet 模式</span>
         </div>
 
+        <!-- 使用者身分標籤 -->
+        <div class="user-status-pill" id="userStatusPill" title="點擊切換使用者帳號">
+            <span>👤</span>
+            <span id="userDisplayName">載入中...</span>
+        </div>
+
         <div class="search-box">
             <span class="search-icon">🔍</span>
             <input type="text" id="searchInput" placeholder="搜尋主題、標題或記事內容...">
@@ -545,6 +627,7 @@
 
         <div class="header-actions">
             <button class="btn btn-outline" id="btnRefresh" title="重新整理">🔄 整理</button>
+            <button class="btn btn-outline" id="btnExport" title="一鍵匯出本記事牆備份">📥 匯出</button>
             <button class="btn btn-outline" id="btnAddTopic">➕ 主題</button>
             <button class="btn btn-primary" id="btnNewNote">➕ 新增筆記</button>
             <button class="btn btn-outline" id="btnAdmin" title="總管理者設定">⚙️ 管理</button>
@@ -560,6 +643,52 @@
     <div id="loadingOverlay">
         <div class="spinner"></div>
         <div id="loadingText">載入雲端記事資料中...</div>
+    </div>
+
+    <!-- ================= 彈窗 0：多使用者登入/註冊 ================= -->
+    <div class="modal" id="modalUserAuth">
+        <div class="modal-card" style="max-width: 400px;">
+            <h3>👤 多使用者獨立空間登入</h3>
+            <div class="admin-tabs">
+                <button class="admin-tab-btn active" onclick="switchUserAuthTab('tabLogin')">🔑 帳號登入</button>
+                <button class="admin-tab-btn" onclick="switchUserAuthTab('tabRegister')">✨ 註冊新空間</button>
+            </div>
+
+            <!-- 登入表單 -->
+            <div class="admin-tab-content active" id="tabLogin">
+                <div class="form-group">
+                    <label>使用者帳號：</label>
+                    <input type="text" id="loginUsername" placeholder="輸入帳號 (例如: admin, user_xiesong)">
+                </div>
+                <div class="form-group">
+                    <label>密碼：</label>
+                    <input type="password" id="loginPassword" placeholder="輸入密碼 (預設 admin 密碼為 8888)">
+                </div>
+                <button class="btn btn-primary" id="btnSubmitLogin" style="width: 100%; margin-top: 8px;">登入我的專屬看板</button>
+            </div>
+
+            <!-- 註冊表單 -->
+            <div class="admin-tab-content" id="tabRegister">
+                <p style="font-size: 0.82rem; color: #666; margin-bottom: 12px;">註冊後系統將在試算表中自動為您建立專屬分頁，與他人完全隔離獨立！</p>
+                <div class="form-group">
+                    <label>自訂帳號 (英數字)：</label>
+                    <input type="text" id="regUsername" placeholder="例如: student01, group_a">
+                </div>
+                <div class="form-group">
+                    <label>顯示稱呼：</label>
+                    <input type="text" id="regDisplayName" placeholder="例如: 小松老師、第一組">
+                </div>
+                <div class="form-group">
+                    <label>登入密碼 (至少 4 碼)：</label>
+                    <input type="password" id="regPassword" placeholder="設定您的登入密碼">
+                </div>
+                <button class="btn btn-primary" id="btnSubmitRegister" style="width: 100%; margin-top: 8px;">立即開闢我的獨立空間</button>
+            </div>
+
+            <div class="modal-footer" style="margin-top: 14px;">
+                <button class="btn btn-outline" onclick="closeAllModals()">暫以訪客瀏覽</button>
+            </div>
+        </div>
     </div>
 
     <!-- ================= 彈窗 1：新增筆記 ================= -->
@@ -582,12 +711,31 @@
                 <label>記事內容 *</label>
                 <textarea id="newCardContent" rows="4" placeholder="在此輸入筆記與心得..."></textarea>
             </div>
+            
+            <!-- 便利貼底色選擇 -->
+            <div class="form-group">
+                <label>卡片便利貼底色：</label>
+                <div class="color-palette" id="newColorPalette">
+                    <div class="color-dot active" data-color="#FFFFFF" style="background:#FFFFFF;" title="簡約白"></div>
+                    <div class="color-dot" data-color="#FFF9C4" style="background:#FFF9C4;" title="暖陽黃"></div>
+                    <div class="color-dot" data-color="#E8F5E9" style="background:#E8F5E9;" title="清新綠"></div>
+                    <div class="color-dot" data-color="#E1F5FE" style="background:#E1F5FE;" title="水天藍"></div>
+                    <div class="color-dot" data-color="#FCE4EC" style="background:#FCE4EC;" title="櫻花粉"></div>
+                    <div class="color-dot" data-color="#EDE7F6" style="background:#EDE7F6;" title="薰衣紫"></div>
+                </div>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px; margin-top: 8px;">
+                <input type="checkbox" id="newCardIsPinned" style="width: auto; cursor: pointer;">
+                <label for="newCardIsPinned" style="margin: 0; cursor: pointer; color: var(--text-main);">📌 一鍵置頂在主題看板最頂端</label>
+            </div>
+
             <div class="form-group">
                 <label>附圖 (可選，支援截圖 Ctrl+V 貼上)</label>
                 <input type="file" id="newCardFileInput" accept="image/*" style="display: none;">
                 <button class="btn btn-outline" id="btnSelectNewImage" style="width: 100%;">📸 選擇相片 / 開啟相機</button>
                 <div class="preview-box" id="newCardPreviewBox">
-                    <span>支援點擊按鈕選圖或按 Ctrl+V 貼上截圖</span>
+                    <span>支援點選按鈕選圖或按 Ctrl+V 貼上截圖</span>
                 </div>
             </div>
             <div class="form-group">
@@ -618,6 +766,25 @@
                 <label>記事內容</label>
                 <textarea id="editCardContent" rows="4"></textarea>
             </div>
+
+            <!-- 編輯卡片便利貼底色 -->
+            <div class="form-group">
+                <label>調整底色：</label>
+                <div class="color-palette" id="editColorPalette">
+                    <div class="color-dot active" data-color="#FFFFFF" style="background:#FFFFFF;" title="簡約白"></div>
+                    <div class="color-dot" data-color="#FFF9C4" style="background:#FFF9C4;" title="暖陽黃"></div>
+                    <div class="color-dot" data-color="#E8F5E9" style="background:#E8F5E9;" title="清新綠"></div>
+                    <div class="color-dot" data-color="#E1F5FE" style="background:#E1F5FE;" title="水天藍"></div>
+                    <div class="color-dot" data-color="#FCE4EC" style="background:#FCE4EC;" title="櫻花粉"></div>
+                    <div class="color-dot" data-color="#EDE7F6" style="background:#EDE7F6;" title="薰衣紫"></div>
+                </div>
+            </div>
+
+            <div class="form-group" style="display: flex; align-items: center; gap: 8px;">
+                <input type="checkbox" id="editCardIsPinned" style="width: auto; cursor: pointer;">
+                <label for="editCardIsPinned" style="margin: 0; cursor: pointer; color: var(--text-main);">📌 置頂在該欄位最前端</label>
+            </div>
+
             <div class="form-group">
                 <label>圖片調整</label>
                 <input type="file" id="editCardFileInput" accept="image/*" style="display: none;">
@@ -729,7 +896,7 @@
 
             <!-- Tab 2: 回收筒卡片復原 -->
             <div class="admin-tab-content" id="tabTrash">
-                <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">以下為被軟刪除的記事清單，點選「復原」即可直接還原回看板：</p>
+                <p style="font-size: 0.85rem; color: #666; margin-bottom: 12px;">以下為當前空間被軟刪除的記事清單，點選「復原」即可直接還原回看板：</p>
                 <div class="trash-list" id="trashListContainer">
                     <p style="text-align: center; color: #888; padding: 20px;">載入回收筒中...</p>
                 </div>
@@ -765,25 +932,141 @@
 
     <script>
         // =====================================================================
-        // ★ 請將下方網址設定為您的 GAS Web App URL
+        // ★ GAS Web App URL
         // =====================================================================
         const GAS_URL = 'https://script.google.com/macros/s/AKfycbznuGd3oq8QhzY4av8deOdNUS-f9b-r_fDqMPZl0DnXIIOEd4Ca5KlfqPZGlJmsVqM10g/exec';
 
         // 全域狀態管理
+        let currentUser = null; // { username, displayName, sheetName, role }
         let boardTopics = [];
         let boardCards = [];
         let currentNewImageBase64 = null;
-        let currentEditImageState = null; // null: 不變, 'REMOVE': 移除, base64: 更新
+        let currentEditImageState = null;
+        let selectedNewColor = '#FFFFFF';
+        let selectedEditColor = '#FFFFFF';
         let pendingDeleteId = null;
         let pendingReorderCard = null;
+        let currentAdminSessionPin = null;
 
         // UI 元素
         const boardCanvas = document.getElementById('boardCanvas');
         const loadingOverlay = document.getElementById('loadingOverlay');
         const loadingText = document.getElementById('loadingText');
         const searchInput = document.getElementById('searchInput');
+        const userStatusPill = document.getElementById('userStatusPill');
+        const userDisplayName = document.getElementById('userDisplayName');
 
-        // ================= 1. 初始化與資料載入 =================
+        // ================= 1. 使用者 Session 初始化 =================
+        function initUserSession() {
+            const saved = localStorage.getItem('padlet_user_session');
+            if (saved) {
+                try {
+                    currentUser = JSON.parse(saved);
+                } catch (e) { currentUser = null; }
+            }
+            if (!currentUser) {
+                // 預設為公開訪客 / Padlet_Cards 空間
+                currentUser = {
+                    username: 'default',
+                    displayName: '公開記事牆',
+                    sheetName: 'Padlet_Cards',
+                    role: 'guest'
+                };
+            }
+            updateUserBadgeUI();
+        }
+
+        function updateUserBadgeUI() {
+            if (currentUser.role === 'admin') {
+                userDisplayName.innerText = `👑 ${currentUser.displayName}`;
+            } else if (currentUser.role === 'guest') {
+                userDisplayName.innerText = `🌐 ${currentUser.displayName} [點此登入]`;
+            } else {
+                userDisplayName.innerText = `👤 ${currentUser.displayName}`;
+            }
+        }
+
+        userStatusPill.onclick = () => {
+            document.getElementById('modalUserAuth').classList.add('show');
+        };
+
+        window.switchUserAuthTab = function(tabId) {
+            document.querySelectorAll('#modalUserAuth .admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#modalUserAuth .admin-tab-content').forEach(c => c.classList.remove('active'));
+
+            if (tabId === 'tabLogin') {
+                document.querySelector('#modalUserAuth .admin-tab-btn:nth-child(1)').classList.add('active');
+                document.getElementById('tabLogin').classList.add('active');
+            } else {
+                document.querySelector('#modalUserAuth .admin-tab-btn:nth-child(2)').classList.add('active');
+                document.getElementById('tabRegister').classList.add('active');
+            }
+        };
+
+        // 登入
+        document.getElementById('btnSubmitLogin').onclick = async () => {
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+            if (!u || !p) { showToast('請填寫帳號與密碼', 'error'); return; }
+
+            showLoading('驗證帳號中...');
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'login', username: u, password: p })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    currentUser = result.user;
+                    localStorage.setItem('padlet_user_session', JSON.stringify(currentUser));
+                    updateUserBadgeUI();
+                    closeAllModals();
+                    showToast(`歡迎回來，${currentUser.displayName}！`, 'success');
+                    await loadBoardData();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (e) {
+                showToast('連線失敗', 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // 註冊
+        document.getElementById('btnSubmitRegister').onclick = async () => {
+            const u = document.getElementById('regUsername').value.trim();
+            const n = document.getElementById('regDisplayName').value.trim();
+            const p = document.getElementById('regPassword').value.trim();
+            if (!u || !p) { showToast('請填寫帳號與密碼', 'error'); return; }
+
+            showLoading('正在開闢您的專屬分頁試算表...');
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'register', username: u, displayName: n, password: p })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    currentUser = result.user;
+                    localStorage.setItem('padlet_user_session', JSON.stringify(currentUser));
+                    updateUserBadgeUI();
+                    closeAllModals();
+                    showToast('🎉 專屬獨立記事牆建立成功！', 'success');
+                    await loadBoardData();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (e) {
+                showToast('連線失敗', 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // ================= 2. 載入看板資料 =================
         function showLoading(text) {
             loadingText.innerText = text || '載入中...';
             loadingOverlay.style.display = 'flex';
@@ -802,9 +1085,16 @@
         }
 
         async function loadBoardData() {
-            showLoading('讀取 Padlet 記事牆中...');
+            showLoading(`讀取【${currentUser.displayName}】記事牆中...`);
             try {
-                const res = await fetch(GAS_URL);
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'getBoardData',
+                        sheetName: currentUser.sheetName
+                    })
+                });
                 const result = await res.json();
                 if (result.status === 'success') {
                     boardTopics = result.topics || [];
@@ -815,41 +1105,36 @@
                 }
             } catch (err) {
                 console.error(err);
-                showToast('網路連線失敗，請檢查 GAS 部署設定', 'error');
+                showToast('網路連線失敗，請稍候再試', 'error');
             } finally {
                 hideLoading();
             }
         }
 
-        // ================= 2. 渲染 Padlet 貨架看板 (Shelf Columns) =================
+        // ================= 3. 渲染 Padlet 貨架看板 (Shelf Columns) =================
         function renderBoard() {
             boardCanvas.innerHTML = '';
             const keyword = searchInput.value.trim().toLowerCase();
 
-            // 取得所有主題列表（包含空主題與有卡片的主題）
             const allTopics = [...new Set([...boardTopics, ...boardCards.map(c => c.topic)])];
             if (allTopics.length === 0) {
                 allTopics.push('一般記事');
             }
 
             allTopics.forEach(topic => {
-                // 篩選該主題下的卡片
                 let cardsInTopic = boardCards.filter(c => c.topic === topic);
 
-                // 若有搜尋關鍵字，進行過濾
                 if (keyword) {
                     cardsInTopic = cardsInTopic.filter(c => 
                         (c.title && c.title.toLowerCase().includes(keyword)) ||
                         (c.content && c.content.toLowerCase().includes(keyword)) ||
                         (c.topic && c.topic.toLowerCase().includes(keyword))
                     );
-                    // 搜尋模式下若該主題無符合內容且搜尋字不符合主題名，則隱藏該直列
                     if (cardsInTopic.length === 0 && !topic.toLowerCase().includes(keyword)) {
                         return;
                     }
                 }
 
-                // 建立主題直列 Column
                 const colEl = document.createElement('div');
                 colEl.className = 'topic-column';
 
@@ -878,8 +1163,11 @@
                         const isLast = index === cardsInTopic.length - 1;
 
                         const cardEl = document.createElement('div');
-                        cardEl.className = 'card';
+                        cardEl.className = `card ${card.isPinned ? 'is-pinned' : ''}`;
                         cardEl.dataset.id = card.id;
+                        if (card.bgColor) {
+                            cardEl.style.backgroundColor = card.bgColor;
+                        }
 
                         const imgHtml = card.imageUrl 
                             ? `<img class="card-img" src="${card.imageUrl}" alt="附圖" onclick="openLightbox('${card.imageUrl}')" loading="lazy">` 
@@ -888,10 +1176,16 @@
                             ? `<div class="card-title">${escapeHtml(card.title)}</div>` 
                             : '';
 
+                        const pinBadgeHtml = card.isPinned ? `<span class="card-pinned-badge">📌 置頂</span>` : '';
+
                         cardEl.innerHTML = `
                             <div class="card-top">
-                                <span class="card-order-badge">#${index + 1}</span>
+                                <div class="card-top-left">
+                                    <span class="card-order-badge">#${index + 1}</span>
+                                    ${pinBadgeHtml}
+                                </div>
                                 <div class="card-actions">
+                                    <button class="action-icon-btn btn-pin ${card.isPinned ? 'active' : ''}" title="${card.isPinned ? '取消置頂' : '置頂於頂端'}" onclick="togglePinCard('${card.id}')">📌</button>
                                     <button class="action-icon-btn" title="上移" ${isFirst ? 'disabled style="opacity:0.3;cursor:default;"' : `onclick="swapCardOrder('${card.id}', '${cardsInTopic[index-1].id}')"`}>▲</button>
                                     <button class="action-icon-btn" title="下移" ${isLast ? 'disabled style="opacity:0.3;cursor:default;"' : `onclick="swapCardOrder('${card.id}', '${cardsInTopic[index+1].id}')"`}>▼</button>
                                     <button class="action-icon-btn" title="指定序號" onclick="openReorderModal('${card.id}', '${escapeHtml(card.topic)}', ${index + 1}, ${cardsInTopic.length})">🔢</button>
@@ -904,7 +1198,9 @@
                             <div class="card-content">${linkify(escapeHtml(card.content))}</div>
                             <div class="card-footer">
                                 <span>🕒 ${card.createdAt || ''}</span>
-                                <span>${card.updatedAt ? '已編輯' : ''}</span>
+                                <button class="btn-like" onclick="likeCard('${card.id}', this)" title="送出愛心">
+                                    ❤️ <span class="like-num">${card.likeCount || 0}</span>
+                                </button>
                             </div>
                         `;
 
@@ -926,7 +1222,21 @@
             boardCanvas.appendChild(addColBox);
         }
 
-        // ================= 3. 新增記事邏輯 =================
+        // ================= 4. 色彩便利貼選擇器邏輯 =================
+        function setupColorPalette(paletteId, onSelect) {
+            const palette = document.getElementById(paletteId);
+            palette.querySelectorAll('.color-dot').forEach(dot => {
+                dot.onclick = () => {
+                    palette.querySelectorAll('.color-dot').forEach(d => d.classList.remove('active'));
+                    dot.classList.add('active');
+                    onSelect(dot.dataset.color);
+                };
+            });
+        }
+        setupColorPalette('newColorPalette', (c) => selectedNewColor = c);
+        setupColorPalette('editColorPalette', (c) => selectedEditColor = c);
+
+        // ================= 5. 新增記事邏輯 =================
         window.openNewCardModal = function(defaultTopic) {
             const select = document.getElementById('newCardTopicSelect');
             select.innerHTML = '';
@@ -949,6 +1259,12 @@
             document.getElementById('newCardTitle').value = '';
             document.getElementById('newCardContent').value = '';
             document.getElementById('newCardPin').value = '';
+            document.getElementById('newCardIsPinned').checked = false;
+            selectedNewColor = '#FFFFFF';
+            document.querySelectorAll('#newColorPalette .color-dot').forEach(d => {
+                d.classList.toggle('active', d.dataset.color === '#FFFFFF');
+            });
+
             currentNewImageBase64 = null;
             document.getElementById('newCardPreviewBox').innerHTML = '<span>支援點選按鈕選圖或按 Ctrl+V 貼上截圖</span>';
 
@@ -971,7 +1287,6 @@
             }
         };
 
-        // 圖片選取與貼上監聽
         document.getElementById('btnSelectNewImage').onclick = () => document.getElementById('newCardFileInput').click();
         document.getElementById('newCardFileInput').onchange = (e) => handleFilePick(e.target.files[0], 'newCardPreviewBox', (b64) => currentNewImageBase64 = b64);
 
@@ -1014,7 +1329,7 @@
                 document.getElementById(previewBoxId).innerHTML = '<span>已移除圖片</span>';
             } else if (previewBoxId === 'editCardPreviewBox') {
                 currentEditImageState = 'REMOVE';
-                document.getElementById(previewBoxId).innerHTML = '<span style="color:var(--danger)">已排程移除圖片 (點儲存後生效)</span>';
+                document.getElementById(previewBoxId).innerHTML = '<span style="color:var(--danger)">已排程移除圖片</span>';
             }
         };
 
@@ -1027,6 +1342,7 @@
             const title = document.getElementById('newCardTitle').value.trim();
             const content = document.getElementById('newCardContent').value.trim();
             const pin = document.getElementById('newCardPin').value.trim();
+            const isPinned = document.getElementById('newCardIsPinned').checked;
 
             if (!content && !currentNewImageBase64) {
                 showToast('請至少輸入文字內容或附帶圖片', 'error');
@@ -1042,11 +1358,14 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'createPost',
+                        sheetName: currentUser.sheetName,
                         topic: topic,
                         title: title,
                         content: content,
                         image: currentNewImageBase64,
-                        pin: pin
+                        pin: pin,
+                        isPinned: isPinned,
+                        bgColor: selectedNewColor
                     })
                 });
                 const result = await res.json();
@@ -1064,14 +1383,65 @@
             }
         };
 
-        // ================= 4. 排序與上下移 =================
+        // ================= 6. 點讚與置頂互動 =================
+        window.likeCard = async function(id, btnElement) {
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'toggleLike',
+                        sheetName: currentUser.sheetName,
+                        id: id
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    const span = btnElement.querySelector('.like-num');
+                    if (span) span.innerText = result.likes;
+                }
+            } catch (e) { console.log(e); }
+        };
+
+        window.togglePinCard = async function(id) {
+            showLoading('更新置頂狀態...');
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'togglePin',
+                        sheetName: currentUser.sheetName,
+                        id: id
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showToast(result.isPinned ? '📌 已置頂此記事' : '已取消置頂');
+                    await loadBoardData();
+                } else {
+                    showToast(result.message, 'error');
+                }
+            } catch (e) {
+                showToast('連線失敗', 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // ================= 7. 排序與上下移 =================
         window.swapCardOrder = async function(id1, id2) {
             showLoading('調整順序中...');
             try {
                 const res = await fetch(GAS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'swapOrder', id1: id1, id2: id2 })
+                    body: JSON.stringify({
+                        action: 'swapOrder',
+                        sheetName: currentUser.sheetName,
+                        id1: id1,
+                        id2: id2
+                    })
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
@@ -1113,6 +1483,7 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'setOrderIndex',
+                        sheetName: currentUser.sheetName,
                         id: pendingReorderCard.id,
                         topic: pendingReorderCard.topic,
                         targetIndex: targetIdx
@@ -1132,7 +1503,7 @@
             }
         };
 
-        // ================= 5. 密碼保護刪除 =================
+        // ================= 8. 密碼保護刪除 =================
         window.openDeleteModal = function(id, hintTitle) {
             pendingDeleteId = id;
             document.getElementById('deleteCardHint').innerText = `欲刪除之記事：「${hintTitle}」\n此動作需要輸入保護密碼！`;
@@ -1156,6 +1527,7 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'deletePost',
+                        sheetName: currentUser.sheetName,
                         id: pendingDeleteId,
                         pin: pin
                     })
@@ -1174,7 +1546,7 @@
             }
         };
 
-        // ================= 6. 編輯卡片 =================
+        // ================= 9. 編輯卡片 =================
         window.openEditModal = function(id) {
             const card = boardCards.find(c => c.id === id);
             if (!card) return;
@@ -1183,8 +1555,14 @@
             document.getElementById('editCardTopic').value = card.topic;
             document.getElementById('editCardTitle').value = card.title || '';
             document.getElementById('editCardContent').value = card.content || '';
-            currentEditImageState = null;
+            document.getElementById('editCardIsPinned').checked = Boolean(card.isPinned);
+            selectedEditColor = card.bgColor || '#FFFFFF';
 
+            document.querySelectorAll('#editColorPalette .color-dot').forEach(d => {
+                d.classList.toggle('active', d.dataset.color === selectedEditColor);
+            });
+
+            currentEditImageState = null;
             const preview = document.getElementById('editCardPreviewBox');
             if (card.imageUrl) {
                 preview.innerHTML = `<img src="${card.imageUrl}" alt="附圖">`;
@@ -1204,6 +1582,7 @@
             const topic = document.getElementById('editCardTopic').value.trim();
             const title = document.getElementById('editCardTitle').value.trim();
             const content = document.getElementById('editCardContent').value.trim();
+            const isPinned = document.getElementById('editCardIsPinned').checked;
 
             showLoading('儲存修改中...');
             closeAllModals();
@@ -1214,11 +1593,14 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'updatePost',
+                        sheetName: currentUser.sheetName,
                         id: id,
                         topic: topic,
                         title: title,
                         content: content,
-                        image: currentEditImageState
+                        image: currentEditImageState,
+                        isPinned: isPinned,
+                        bgColor: selectedEditColor
                     })
                 });
                 const result = await res.json();
@@ -1235,29 +1617,40 @@
             }
         };
 
-        // ================= 7. 新增主題欄位 =================
-        document.getElementById('btnAddTopic').onclick = () => {
-            document.getElementById('newTopicNameInput').value = '';
-            document.getElementById('modalAddTopic').classList.add('show');
-        };
-
-        document.getElementById('btnSubmitNewTopic').onclick = () => {
-            const name = document.getElementById('newTopicNameInput').value.trim();
-            if (!name) {
-                showToast('請輸入主題名稱', 'error');
+        // ================= 10. 一鍵匯出備份 (Export) =================
+        document.getElementById('btnExport').onclick = () => {
+            if (boardCards.length === 0) {
+                showToast('目前看板尚無記事可匯出', 'error');
                 return;
             }
-            if (!boardTopics.includes(name)) {
-                boardTopics.push(name);
-            }
-            closeAllModals();
-            renderBoard();
-            showToast('已新增主題【' + name + '】');
+
+            let md = `# 雲端記事牆備份：${currentUser.displayName}\n`;
+            md += `匯出時間：${new Date().toLocaleString()}\n`;
+            md += `所屬工作表：${currentUser.sheetName}\n\n---\n\n`;
+
+            const allTopics = [...new Set([...boardTopics, ...boardCards.map(c => c.topic)])];
+            allTopics.forEach(t => {
+                const cards = boardCards.filter(c => c.topic === t);
+                if (cards.length > 0) {
+                    md += `## 🏷️ 主題：${t}\n\n`;
+                    cards.forEach((c, i) => {
+                        md += `### ${i + 1}. ${c.title || '無標題'} ${c.isPinned ? '(📌 置頂)' : ''}\n`;
+                        md += `- **建立時間**：${c.createdAt}\n`;
+                        if (c.imageUrl) md += `- **圖片**：![附圖](${c.imageUrl})\n`;
+                        md += `\n${c.content}\n\n---\n\n`;
+                    });
+                }
+            });
+
+            const blob = new Blob([md], { type: 'text/markdown;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `Padlet備份_${currentUser.displayName}_${new Date().toISOString().slice(0, 10)}.md`;
+            a.click();
+            showToast('📥 記事牆備份下載完成！', 'success');
         };
 
-        // ================= 8. 總管理控制台 (Admin Settings) =================
-        let currentAdminSessionPin = null;
-
+        // ================= 11. 總管理控制台 (Admin Settings) =================
         document.getElementById('btnAdmin').onclick = () => {
             if (currentAdminSessionPin) {
                 openAdminPanel();
@@ -1269,10 +1662,8 @@
 
         document.getElementById('btnSubmitAdminAuth').onclick = async () => {
             const pin = document.getElementById('adminAuthPinInput').value.trim();
-            if (!pin) {
-                showToast('請輸入管理密碼', 'error');
-                return;
-            }
+            if (!pin) { showToast('請輸入管理密碼', 'error'); return; }
+
             showLoading('驗證管理員身分中...');
             try {
                 const res = await fetch(GAS_URL, {
@@ -1302,27 +1693,26 @@
         };
 
         window.switchAdminTab = function(tabId) {
-            document.querySelectorAll('.admin-tab-btn').forEach(btn => btn.classList.remove('active'));
-            document.querySelectorAll('.admin-tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelectorAll('#modalAdminPanel .admin-tab-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#modalAdminPanel .admin-tab-content').forEach(content => content.classList.remove('active'));
 
             if (tabId === 'tabPin') {
-                document.querySelector('.admin-tab-btn:nth-child(1)').classList.add('active');
+                document.querySelector('#modalAdminPanel .admin-tab-btn:nth-child(1)').classList.add('active');
                 document.getElementById('tabPin').classList.add('active');
                 document.getElementById('oldAdminPinInput').value = currentAdminSessionPin || '';
                 document.getElementById('newAdminPinInput').value = '';
                 document.getElementById('confirmNewAdminPinInput').value = '';
             } else if (tabId === 'tabTrash') {
-                document.querySelector('.admin-tab-btn:nth-child(2)').classList.add('active');
+                document.querySelector('#modalAdminPanel .admin-tab-btn:nth-child(2)').classList.add('active');
                 document.getElementById('tabTrash').classList.add('active');
                 loadTrashList();
             } else if (tabId === 'tabTopics') {
-                document.querySelector('.admin-tab-btn:nth-child(3)').classList.add('active');
+                document.querySelector('#modalAdminPanel .admin-tab-btn:nth-child(3)').classList.add('active');
                 document.getElementById('tabTopics').classList.add('active');
                 populateAdminTopics();
             }
         };
 
-        // 更新管理密碼
         document.getElementById('btnSaveNewPin').onclick = async () => {
             const oldPin = document.getElementById('oldAdminPinInput').value.trim();
             const newPin = document.getElementById('newAdminPinInput').value.trim();
@@ -1354,7 +1744,6 @@
             }
         };
 
-        // 載入回收筒
         async function loadTrashList() {
             const container = document.getElementById('trashListContainer');
             container.innerHTML = '<p style="text-align: center; color: #888; padding: 20px;">讀取中...</p>';
@@ -1362,7 +1751,11 @@
                 const res = await fetch(GAS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'getTrashCards', pin: currentAdminSessionPin })
+                    body: JSON.stringify({
+                        action: 'getTrashCards',
+                        sheetName: currentUser.sheetName,
+                        pin: currentAdminSessionPin
+                    })
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
@@ -1398,7 +1791,12 @@
                 const res = await fetch(GAS_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                    body: JSON.stringify({ action: 'restorePost', pin: currentAdminSessionPin, id: id })
+                    body: JSON.stringify({
+                        action: 'restorePost',
+                        sheetName: currentUser.sheetName,
+                        pin: currentAdminSessionPin,
+                        id: id
+                    })
                 });
                 const result = await res.json();
                 if (result.status === 'success') {
@@ -1431,10 +1829,8 @@
         document.getElementById('btnSubmitRenameTopic').onclick = async () => {
             const oldTopic = document.getElementById('adminTopicSelect').value;
             const newTopic = document.getElementById('adminNewTopicInput').value.trim();
-            if (!newTopic) {
-                showToast('請輸入新主題名稱', 'error');
-                return;
-            }
+            if (!newTopic) { showToast('請輸入新主題名稱', 'error'); return; }
+
             showLoading('更新主題中...');
             try {
                 const res = await fetch(GAS_URL, {
@@ -1442,6 +1838,7 @@
                     headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                     body: JSON.stringify({
                         action: 'renameTopic',
+                        sheetName: currentUser.sheetName,
                         pin: currentAdminSessionPin,
                         oldTopic: oldTopic,
                         newTopic: newTopic
@@ -1462,7 +1859,22 @@
             }
         };
 
-        // ================= 9. 燈箱與共用輔助 =================
+        // ================= 12. 新增主題欄位 =================
+        document.getElementById('btnAddTopic').onclick = () => {
+            document.getElementById('newTopicNameInput').value = '';
+            document.getElementById('modalAddTopic').classList.add('show');
+        };
+
+        document.getElementById('btnSubmitNewTopic').onclick = () => {
+            const name = document.getElementById('newTopicNameInput').value.trim();
+            if (!name) { showToast('請輸入主題名稱', 'error'); return; }
+            if (!boardTopics.includes(name)) boardTopics.push(name);
+            closeAllModals();
+            renderBoard();
+            showToast('已新增主題【' + name + '】');
+        };
+
+        // ================= 13. 燈箱與共用輔助 =================
         window.openLightbox = function(url) {
             document.getElementById('lightboxImg').src = url;
             document.getElementById('lightboxModal').classList.add('show');
@@ -1472,7 +1884,6 @@
             document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
         };
 
-        // 搜尋監聽
         searchInput.addEventListener('input', () => renderBoard());
         document.getElementById('btnRefresh').onclick = () => loadBoardData();
         document.getElementById('btnNewNote').onclick = () => openNewCardModal();
@@ -1495,6 +1906,7 @@
         }
 
         // 初始啟動
+        initUserSession();
         loadBoardData();
     </script>
 </body>
