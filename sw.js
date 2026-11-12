@@ -1,4 +1,4 @@
-const CACHE_NAME = 'clipboard-app-v1';
+const CACHE_NAME = 'padlet-wall-app-v2';
 const urlsToCache = [
   './',
   './index.html',
@@ -7,18 +7,32 @@ const urlsToCache = [
   './icon-512.png'
 ];
 
-// 安裝階段：將指定檔案加入快取
+// 安裝階段：快取靜態資源
 self.addEventListener('install', event => {
+  self.skipWaiting();
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
   );
 });
 
-// 攔截請求階段：優先從快取抓取，若無則透過網路
+// 啟動階段：清除舊快取
+self.addEventListener('activate', event => {
+  event.waitUntil(
+    caches.keys().then(cacheNames => {
+      return Promise.all(
+        cacheNames.map(name => {
+          if (name !== CACHE_NAME) {
+            return caches.delete(name);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// 攔截請求階段：優先從網路載入以確保即時性，離線時使用快取
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });

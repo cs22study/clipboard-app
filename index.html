@@ -3,302 +3,1170 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>雲端記事牆</title>
+    <title>雲端記事牆 Padlet</title>
     <!-- PWA 設定 -->
     <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#4CAF50">
-    <link rel="apple-touch-icon" href="icon-192.png">
+    <meta name="theme-color" content="#2E7D32">
+    <link rel="apple-touch-icon" href="icon設計192_192.png">
     
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin: 0; padding: 0; }
-        
-        /* 頂部搜尋與分類導覽列 */
-        header { background: white; padding: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
-        .search-bar { width: 100%; padding: 12px; border-radius: 20px; border: 1px solid #ddd; box-sizing: border-box; font-size: 16px; outline: none; }
-        .search-bar:focus { border-color: #4CAF50; }
-        .theme-filters { margin-top: 15px; display: flex; gap: 10px; overflow-x: auto; padding-bottom: 5px; }
-        .theme-filters::-webkit-scrollbar { height: 5px; }
-        .theme-filters::-webkit-scrollbar-thumb { background: #ccc; border-radius: 5px; }
-        .filter-btn { padding: 6px 15px; border-radius: 15px; border: none; background: #e4e6eb; cursor: pointer; white-space: nowrap; font-size: 14px; }
-        .filter-btn.active { background: #4CAF50; color: white; }
+        :root {
+            --primary: #2E7D32;
+            --primary-hover: #1B5E20;
+            --primary-light: #E8F5E9;
+            --accent: #FF9800;
+            --danger: #D32F2F;
+            --bg-body: #ECEFF1;
+            --bg-column: #F5F7F8;
+            --card-bg: #FFFFFF;
+            --text-main: #263238;
+            --text-sub: #78909C;
+            --border: #CFD8DC;
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.06);
+            --shadow-md: 0 4px 10px rgba(0,0,0,0.1);
+            --shadow-lg: 0 8px 24px rgba(0,0,0,0.15);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
 
-        /* 瀑布流版面 (Padlet 風格) */
-        .masonry { column-count: 2; column-gap: 15px; padding: 15px; max-width: 1200px; margin: 0 auto; }
-        @media (max-width: 600px) { .masonry { column-count: 1; } } /* 手機單排 */
-        @media (min-width: 900px) { .masonry { column-count: 3; } } /* 電腦多排 */
-        
-        /* 卡片設計 */
-        .card { background: white; border-radius: 12px; padding: 15px; margin-bottom: 15px; break-inside: avoid; box-shadow: 0 2px 8px rgba(0,0,0,0.08); transition: transform 0.2s; }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .card img { width: 100%; border-radius: 8px; margin-bottom: 10px; display: block; }
-        .theme-tag { font-size: 0.8em; background: #e3f2fd; color: #1976d2; padding: 4px 10px; border-radius: 12px; display: inline-block; margin-bottom: 8px; font-weight: bold; }
-        .card-note { font-size: 15px; line-height: 1.5; color: #333; white-space: pre-wrap; }
-        .date-tag { font-size: 0.75em; color: #999; margin-top: 12px; display: block; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+        body { background: var(--bg-body); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        /* 懸浮新增按鈕 (FAB) */
-        .fab { position: fixed; bottom: 25px; right: 25px; background: #4CAF50; color: white; width: 60px; height: 60px; border-radius: 50%; font-size: 32px; border: none; box-shadow: 0 4px 12px rgba(76, 175, 80, 0.4); cursor: pointer; z-index: 100; display: flex; align-items: center; justify-content: center; }
-        
-        /* 彈出新增視窗 (Modal) */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 200; align-items: center; justify-content: center; }
+        /* ================= 頂部導覽列 (Header) ================= */
+        header {
+            background: #FFFFFF;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 15px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            z-index: 100;
+            flex-wrap: wrap;
+        }
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        .brand span.badge {
+            font-size: 0.75rem;
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+        .search-box {
+            flex: 1;
+            max-width: 420px;
+            position: relative;
+        }
+        .search-box input {
+            width: 100%;
+            padding: 8px 14px 8px 36px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            font-size: 14px;
+            outline: none;
+            background: #FAFAFA;
+            transition: all 0.2s;
+        }
+        .search-box input:focus {
+            background: #FFFFFF;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.2);
+        }
+        .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-sub);
+            font-size: 14px;
+        }
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s;
+        }
+        .btn-primary { background: var(--primary); color: #FFF; }
+        .btn-primary:hover { background: var(--primary-hover); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        .btn-outline:hover { background: #ECEFF1; }
+
+        /* ================= Padlet 看板區域 (Shelf Columns) ================= */
+        .board-container {
+            flex: 1;
+            overflow-x: auto;
+            overflow-y: hidden;
+            padding: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+        .board-container::-webkit-scrollbar { height: 10px; }
+        .board-container::-webkit-scrollbar-thumb { background: #B0BEC5; border-radius: 5px; }
+
+        /* 主題直列看板 (Column) */
+        .topic-column {
+            background: var(--bg-column);
+            width: 320px;
+            min-width: 300px;
+            max-width: 360px;
+            max-height: calc(100vh - 100px);
+            border-radius: var(--radius-md);
+            display: flex;
+            flex-direction: column;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .column-header {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 2px solid #E0E0E0;
+            background: #FFFFFF;
+            border-top-left-radius: var(--radius-md);
+            border-top-right-radius: var(--radius-md);
+        }
+        .column-title {
+            font-weight: 700;
+            font-size: 1rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .column-count {
+            font-size: 0.75rem;
+            background: #ECEFF1;
+            color: var(--text-sub);
+            padding: 2px 7px;
+            border-radius: 10px;
+        }
+        .col-add-btn {
+            background: transparent;
+            border: none;
+            color: var(--primary);
+            cursor: pointer;
+            font-size: 1.2rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+        .col-add-btn:hover { background: var(--primary-light); }
+
+        /* 直列卡片列表 */
+        .column-cards {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .column-cards::-webkit-scrollbar { width: 6px; }
+        .column-cards::-webkit-scrollbar-thumb { background: #CFD8DC; border-radius: 3px; }
+
+        .empty-placeholder {
+            text-align: center;
+            padding: 30px 10px;
+            color: var(--text-sub);
+            font-size: 0.9rem;
+            border: 2px dashed #CFD8DC;
+            border-radius: var(--radius-sm);
+            background: #FAFAFA;
+            cursor: pointer;
+        }
+        .empty-placeholder:hover { border-color: var(--primary); color: var(--primary); }
+
+        /* ================= 筆記卡片 (Card) ================= */
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            box-shadow: var(--shadow-sm);
+            border: 1px solid #ECEFF1;
+            transition: transform 0.15s, box-shadow 0.15s;
+            position: relative;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .card-order-badge {
+            font-size: 0.75rem;
+            background: #E3F2FD;
+            color: #1976D2;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 700;
+        }
+        .card-actions {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .action-icon-btn {
+            background: transparent;
+            border: none;
+            cursor: pointer;
+            color: var(--text-sub);
+            padding: 4px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            line-height: 1;
+            transition: color 0.15s, background 0.15s;
+        }
+        .action-icon-btn:hover { background: #ECEFF1; color: var(--text-main); }
+        .action-icon-btn.btn-del:hover { background: #FFEBEE; color: var(--danger); }
+
+        .card-title {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--text-main);
+            margin-bottom: 6px;
+            line-height: 1.4;
+        }
+        .card-img {
+            width: 100%;
+            border-radius: var(--radius-sm);
+            margin: 6px 0 10px 0;
+            display: block;
+            cursor: pointer;
+            object-fit: cover;
+            max-height: 220px;
+            transition: opacity 0.2s;
+        }
+        .card-img:hover { opacity: 0.92; }
+
+        .card-content {
+            font-size: 0.92rem;
+            line-height: 1.55;
+            color: #37474F;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .card-footer {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--text-sub);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 6px;
+            border-top: 1px solid #F0F0F0;
+        }
+
+        /* 快速新增主題按鈕欄 */
+        .add-column-box {
+            width: 260px;
+            min-width: 240px;
+            background: rgba(255, 255, 255, 0.7);
+            border: 2px dashed #B0BEC5;
+            border-radius: var(--radius-md);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-sub);
+            font-weight: 600;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .add-column-box:hover {
+            background: #FFFFFF;
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* ================= 彈出視窗 (Modal) ================= */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.55);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 15px;
+            backdrop-filter: blur(2px);
+        }
         .modal.show { display: flex; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 90%; max-width: 450px; max-height: 90vh; overflow-y: auto; }
-        .modal-content h3 { margin-top: 0; }
-        .modal input, .modal textarea { width: 100%; padding: 12px; margin-top: 10px; border: 1px solid #ccc; border-radius: 8px; box-sizing: border-box; font-size: 15px; }
-        #previewBox { width: 100%; min-height: 150px; border: 2px dashed #bbb; border-radius: 8px; margin-top: 15px; display: flex; align-items: center; justify-content: center; color: #888; overflow: hidden; }
-        .btn-group { display: flex; gap: 12px; margin-top: 20px; }
-        .btn-group button { flex: 1; padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-size: 16px; font-weight: bold; }
-        .btn-submit { background: #4CAF50; color: white; }
-        .btn-cancel { background: #f44336; color: white; }
-        .select-img-btn { background: #2196F3; color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; margin-top: 10px; font-size: 16px; cursor: pointer; }
-        
-        /* 載入中動畫 */
-        #loading { text-align: center; padding: 40px; color: #666; }
+        .modal-card {
+            background: #FFFFFF;
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 480px;
+            max-height: 90vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: var(--shadow-lg);
+            animation: modalIn 0.2s ease-out;
+        }
+        @keyframes modalIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .modal-card h3 {
+            font-size: 1.25rem;
+            margin-bottom: 16px;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .form-group {
+            margin-bottom: 14px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-sub);
+            margin-bottom: 6px;
+        }
+        .form-group input, .form-group textarea, .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-size: 14px;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.15);
+        }
+        .preview-box {
+            width: 100%;
+            min-height: 120px;
+            max-height: 200px;
+            border: 2px dashed var(--border);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--text-sub);
+            font-size: 0.85rem;
+            position: relative;
+            overflow: hidden;
+            margin-top: 8px;
+            background: #FAFAFA;
+        }
+        .preview-box img {
+            max-width: 100%;
+            max-height: 180px;
+            border-radius: 4px;
+        }
+        .preview-remove-btn {
+            position: absolute;
+            top: 6px; right: 6px;
+            background: rgba(0,0,0,0.65);
+            color: #FFF;
+            border: none;
+            border-radius: 50%;
+            width: 26px; height: 26px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        /* 圖片放大檢視 (Lightbox) */
+        .lightbox-modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.88);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            cursor: zoom-out;
+        }
+        .lightbox-modal.show { display: flex; }
+        .lightbox-modal img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: var(--radius-sm);
+            box-shadow: 0 4px 30px rgba(0,0,0,0.5);
+        }
+
+        /* 提示通知 (Toast) */
+        #toastContainer {
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: #37474F;
+            color: #FFFFFF;
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            box-shadow: var(--shadow-md);
+            animation: toastIn 0.25s, toastOut 0.25s 2.75s forwards;
+        }
+        .toast.error { background: var(--danger); }
+        .toast.success { background: var(--primary); }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes toastOut { from { opacity: 1; } to { opacity: 0; } }
+
+        /* 讀取指示 */
+        #loadingOverlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(255,255,255,0.7);
+            z-index: 2500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 12px;
+            font-weight: 600;
+            color: var(--primary);
+        }
+        .spinner {
+            width: 40px; height: 40px;
+            border: 4px solid #CFD8DC;
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 640px) {
+            header { padding: 8px 12px; }
+            .brand span.text { display: none; }
+            .topic-column { width: 85vw; min-width: 85vw; }
+        }
     </style>
 </head>
 <body>
 
+    <!-- 頂部導覽列 -->
     <header>
-        <input type="text" id="searchInput" placeholder="🔍 關鍵字搜尋...">
-        <div class="theme-filters" id="themeFilters">
-            <!-- 分類按鈕會由 JS 動態生成 -->
+        <div class="brand">
+            <span>📌</span>
+            <span class="text">雲端記事牆</span>
+            <span class="badge">Padlet 模式</span>
+        </div>
+
+        <div class="search-box">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="searchInput" placeholder="搜尋主題、標題或記事內容...">
+        </div>
+
+        <div class="header-actions">
+            <button class="btn btn-outline" id="btnRefresh" title="重新整理">🔄 整理</button>
+            <button class="btn btn-outline" id="btnAddTopic">➕ 主題</button>
+            <button class="btn btn-primary" id="btnNewNote">➕ 新增筆記</button>
         </div>
     </header>
 
-    <div id="loading">讀取資料中，請稍候...</div>
-    <main class="masonry" id="postGrid"></main>
-    
-    <button class="fab" id="addBtn">+</button>
+    <!-- Padlet 看板主容器 -->
+    <main class="board-container" id="boardCanvas">
+        <!-- 主題直列由 JS 動態生成 -->
+    </main>
 
-    <!-- 新增貼文的彈出視窗 -->
-    <div class="modal" id="uploadModal">
-        <div class="modal-content">
-            <h3>新增記事</h3>
-            <input type="text" id="themeInput" placeholder="主題 (如: 戶外踏查、無人機)">
-            <textarea id="noteInput" rows="4" placeholder="在這裡輸入筆記內容..."></textarea>
-            
-            <input type="file" id="fileInput" accept="image/*" style="display: none;">
-            <button class="select-img-btn" id="selectImgBtn">📸 選擇圖片/拍照</button>
-            
-            <p style="font-size: 12px; color: #666; margin-bottom: 0;">*也支援直接在此視窗按 Ctrl+V 貼上截圖</p>
-            <div id="previewBox">預覽區</div>
-            
-            <div class="btn-group">
-                <button class="btn-cancel" id="cancelBtn">取消</button>
-                <button class="btn-submit" id="submitBtn">發布</button>
+    <!-- 讀取中遮罩 -->
+    <div id="loadingOverlay">
+        <div class="spinner"></div>
+        <div id="loadingText">載入雲端記事資料中...</div>
+    </div>
+
+    <!-- ================= 彈窗 1：新增筆記 ================= -->
+    <div class="modal" id="modalNewCard">
+        <div class="modal-card">
+            <h3>📝 新增記事卡片</h3>
+            <div class="form-group">
+                <label>選擇或輸入所屬主題 (Topic)</label>
+                <div style="display: flex; gap: 8px;">
+                    <select id="newCardTopicSelect" style="flex: 1;"></select>
+                    <input type="text" id="newCardCustomTopic" placeholder="自訂新主題" style="flex: 1; display: none;">
+                    <button class="btn btn-outline" id="btnToggleCustomTopic" style="padding: 8px 12px;">+ 新主題</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>標題 (選填)</label>
+                <input type="text" id="newCardTitle" placeholder="簡短標題 (如：觀察摘要)">
+            </div>
+            <div class="form-group">
+                <label>記事內容 *</label>
+                <textarea id="newCardContent" rows="4" placeholder="在此輸入筆記與心得..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>附圖 (可選，支援截圖 Ctrl+V 貼上)</label>
+                <input type="file" id="newCardFileInput" accept="image/*" style="display: none;">
+                <button class="btn btn-outline" id="btnSelectNewImage" style="width: 100%;">📸 選擇相片 / 開啟相機</button>
+                <div class="preview-box" id="newCardPreviewBox">
+                    <span>支援點擊按鈕選圖或按 Ctrl+V 貼上截圖</span>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>設定刪除保護密碼 (選填)</label>
+                <input type="password" id="newCardPin" placeholder="可自訂 4~8 碼個人密碼 (若留空則採管理者密碼)">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAllModals()">取消</button>
+                <button class="btn btn-primary" id="btnSubmitNewCard">發布至記事牆</button>
             </div>
         </div>
     </div>
 
+    <!-- ================= 彈窗 2：編輯卡片 ================= -->
+    <div class="modal" id="modalEditCard">
+        <div class="modal-card">
+            <h3>✏️ 編輯記事卡片</h3>
+            <input type="hidden" id="editCardId">
+            <div class="form-group">
+                <label>所屬主題</label>
+                <input type="text" id="editCardTopic">
+            </div>
+            <div class="form-group">
+                <label>標題</label>
+                <input type="text" id="editCardTitle">
+            </div>
+            <div class="form-group">
+                <label>記事內容</label>
+                <textarea id="editCardContent" rows="4"></textarea>
+            </div>
+            <div class="form-group">
+                <label>圖片調整</label>
+                <input type="file" id="editCardFileInput" accept="image/*" style="display: none;">
+                <div style="display: flex; gap: 8px;">
+                    <button class="btn btn-outline" id="btnReplaceImage" style="flex: 1;">🔄 更換圖片</button>
+                    <button class="btn btn-outline" id="btnRemoveImage" style="flex: 1; color: var(--danger);">🗑️ 移除現有圖片</button>
+                </div>
+                <div class="preview-box" id="editCardPreviewBox"></div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAllModals()">取消</button>
+                <button class="btn btn-primary" id="btnSubmitEditCard">儲存修改</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 彈窗 3：密碼驗證刪除 ================= -->
+    <div class="modal" id="modalDeleteCard">
+        <div class="modal-card" style="max-width: 380px;">
+            <h3 style="color: var(--danger);">🗑️ 確認刪除記事</h3>
+            <p id="deleteCardHint" style="font-size: 0.9rem; color: #555; margin-bottom: 14px; line-height: 1.4;"></p>
+            <div class="form-group">
+                <label>請輸入刪除保護密碼：</label>
+                <input type="password" id="deleteCardPinInput" placeholder="請輸入建立時設定的密碼或管理密碼" autofocus>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAllModals()">取消</button>
+                <button class="btn btn-primary" id="btnConfirmDelete" style="background: var(--danger);">確認刪除</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 彈窗 4：指定序號位移 ================= -->
+    <div class="modal" id="modalReorder">
+        <div class="modal-card" style="max-width: 360px;">
+            <h3>🔢 調整出現序列</h3>
+            <p id="reorderHint" style="font-size: 0.9rem; color: #555; margin-bottom: 14px;"></p>
+            <div class="form-group">
+                <label>移至指定順位 (1 為最頂端)：</label>
+                <input type="number" id="targetIndexInput" min="1" step="1">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAllModals()">取消</button>
+                <button class="btn btn-primary" id="btnSubmitReorder">更新排序</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 彈窗 5：新增主題 ================= -->
+    <div class="modal" id="modalAddTopic">
+        <div class="modal-card" style="max-width: 360px;">
+            <h3>➕ 開設新主題欄位</h3>
+            <div class="form-group">
+                <label>主題名稱：</label>
+                <input type="text" id="newTopicNameInput" placeholder="例如：課程心得、自然生態">
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-outline" onclick="closeAllModals()">取消</button>
+                <button class="btn btn-primary" id="btnSubmitNewTopic">建立主題</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 圖片燈箱 (Lightbox) -->
+    <div class="lightbox-modal" id="lightboxModal" onclick="this.classList.remove('show')">
+        <img id="lightboxImg" src="" alt="放大檢視">
+    </div>
+
+    <!-- Toast 容器 -->
+    <div id="toastContainer"></div>
+
     <script>
-        // ==========================================
-        // ★ 請將下方網址替換為您的 GAS Web App URL
-        const GAS_URL = 'https://script.google.com/macros/s/AKfycby2P2dlCaLkp0r8iWWBrYPDzaXxV_NGVW6E3CZAJTo00SeD6BxLZNVwBuiJynbt1DJ-/exec';
-        // ==========================================
+        // =====================================================================
+        // ★ 請將下方網址設定為您的 GAS Web App URL
+        // =====================================================================
+        const GAS_URL = 'https://script.google.com/macros/s/AKfycbz-GbyFg6_y5i-uUxShxrWCqknkZORCMvIpYMKnmSAw4W8aZSvlTl4YM_pCkGJRgH9C/exec';
 
-        let allPosts = []; // 儲存從雲端抓回來的所有資料
-        let currentBase64Image = null;
+        // 全域狀態管理
+        let boardTopics = [];
+        let boardCards = [];
+        let currentNewImageBase64 = null;
+        let currentEditImageState = null; // null: 不變, 'REMOVE': 移除, base64: 更新
+        let pendingDeleteId = null;
+        let pendingReorderCard = null;
 
-        // UI 元素綁定
-        const postGrid = document.getElementById('postGrid');
-        const themeFilters = document.getElementById('themeFilters');
+        // UI 元素
+        const boardCanvas = document.getElementById('boardCanvas');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingText = document.getElementById('loadingText');
         const searchInput = document.getElementById('searchInput');
-        const loading = document.getElementById('loading');
-        
-        // Modal 元素
-        const addBtn = document.getElementById('addBtn');
-        const uploadModal = document.getElementById('uploadModal');
-        const cancelBtn = document.getElementById('cancelBtn');
-        const submitBtn = document.getElementById('submitBtn');
-        const selectImgBtn = document.getElementById('selectImgBtn');
-        const fileInput = document.getElementById('fileInput');
-        const previewBox = document.getElementById('previewBox');
 
-        // 1. 初始化：網頁載入時從 GAS 抓取資料
-        function loadData() {
-            loading.style.display = 'block';
-            postGrid.innerHTML = '';
-            
-            fetch(GAS_URL)
-                .then(res => res.json())
-                .then(result => {
-                    if (result.status === 'success') {
-                        allPosts = result.data;
-                        renderFilters();
-                        renderPosts(allPosts);
-                    }
-                    loading.style.display = 'none';
-                })
-                .catch(err => {
-                    loading.innerHTML = '載入失敗，請檢查網路或 API 網址。';
-                    console.error(err);
-                });
+        // ================= 1. 初始化與資料載入 =================
+        function showLoading(text) {
+            loadingText.innerText = text || '載入中...';
+            loadingOverlay.style.display = 'flex';
+        }
+        function hideLoading() {
+            loadingOverlay.style.display = 'none';
         }
 
-        // 2. 渲染分類按鈕
-        function renderFilters() {
-            // 擷取所有不重複的主題
-            const themes = [...new Set(allPosts.map(p => p.theme || '未分類'))];
-            
-            let filterHTML = `<button class="filter-btn active" onclick="filterByTheme('全部')">全部</button>`;
-            themes.forEach(theme => {
-                if(theme.trim() !== '') {
-                    filterHTML += `<button class="filter-btn" onclick="filterByTheme('${theme}')">${theme}</button>`;
+        function showToast(msg, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            el.innerText = msg;
+            container.appendChild(el);
+            setTimeout(() => { if (el.parentNode) el.parentNode.removeChild(el); }, 3000);
+        }
+
+        async function loadBoardData() {
+            showLoading('讀取 Padlet 記事牆中...');
+            try {
+                const res = await fetch(GAS_URL);
+                const result = await res.json();
+                if (result.status === 'success') {
+                    boardTopics = result.topics || [];
+                    boardCards = result.cards || [];
+                    renderBoard();
+                } else {
+                    showToast('讀取失敗：' + (result.message || '未知錯誤'), 'error');
                 }
-            });
-            themeFilters.innerHTML = filterHTML;
+            } catch (err) {
+                console.error(err);
+                showToast('網路連線失敗，請檢查 GAS 部署設定', 'error');
+            } finally {
+                hideLoading();
+            }
         }
 
-        // 3. 渲染卡片牆
-        function renderPosts(posts) {
-            if (posts.length === 0) {
-                postGrid.innerHTML = '<p style="text-align:center; color:#888; width:100%;">沒有找到相關紀錄。</p>';
-                return;
+        // ================= 2. 渲染 Padlet 貨架看板 (Shelf Columns) =================
+        function renderBoard() {
+            boardCanvas.innerHTML = '';
+            const keyword = searchInput.value.trim().toLowerCase();
+
+            // 取得所有主題列表（包含空主題與有卡片的主題）
+            const allTopics = [...new Set([...boardTopics, ...boardCards.map(c => c.topic)])];
+            if (allTopics.length === 0) {
+                allTopics.push('一般記事');
             }
-            
-            let html = '';
-            posts.forEach(post => {
-                // 如果有圖片，顯示 img 標籤；若無則隱藏
-                const imgHTML = post.imageUrl ? `<img src="${post.imageUrl}" alt="圖片" loading="lazy">` : '';
-                const themeText = post.theme ? post.theme : '未分類';
-                
-                html += `
-                    <div class="card">
-                        ${imgHTML}
-                        <span class="theme-tag"># ${themeText}</span>
-                        <div class="card-note">${post.note}</div>
-                        <span class="date-tag">${post.timestamp}</span>
+
+            allTopics.forEach(topic => {
+                // 篩選該主題下的卡片
+                let cardsInTopic = boardCards.filter(c => c.topic === topic);
+
+                // 若有搜尋關鍵字，進行過濾
+                if (keyword) {
+                    cardsInTopic = cardsInTopic.filter(c => 
+                        (c.title && c.title.toLowerCase().includes(keyword)) ||
+                        (c.content && c.content.toLowerCase().includes(keyword)) ||
+                        (c.topic && c.topic.toLowerCase().includes(keyword))
+                    );
+                    // 搜尋模式下若該主題無符合內容且搜尋字不符合主題名，則隱藏該直列
+                    if (cardsInTopic.length === 0 && !topic.toLowerCase().includes(keyword)) {
+                        return;
+                    }
+                }
+
+                // 建立主題直列 Column
+                const colEl = document.createElement('div');
+                colEl.className = 'topic-column';
+
+                colEl.innerHTML = `
+                    <div class="column-header">
+                        <div class="column-title">
+                            <span>🏷️ ${escapeHtml(topic)}</span>
+                            <span class="column-count">${cardsInTopic.length}</span>
+                        </div>
+                        <button class="col-add-btn" onclick="openNewCardModal('${escapeHtml(topic)}')">＋</button>
                     </div>
+                    <div class="column-cards" id="col-cards-${encodeURIComponent(topic)}"></div>
                 `;
+
+                const cardsContainer = colEl.querySelector('.column-cards');
+
+                if (cardsInTopic.length === 0) {
+                    cardsContainer.innerHTML = `
+                        <div class="empty-placeholder" onclick="openNewCardModal('${escapeHtml(topic)}')">
+                            ＋ 點此在此主題新增第一筆筆記
+                        </div>
+                    `;
+                } else {
+                    cardsInTopic.forEach((card, index) => {
+                        const isFirst = index === 0;
+                        const isLast = index === cardsInTopic.length - 1;
+
+                        const cardEl = document.createElement('div');
+                        cardEl.className = 'card';
+                        cardEl.dataset.id = card.id;
+
+                        const imgHtml = card.imageUrl 
+                            ? `<img class="card-img" src="${card.imageUrl}" alt="附圖" onclick="openLightbox('${card.imageUrl}')" loading="lazy">` 
+                            : '';
+                        const titleHtml = card.title 
+                            ? `<div class="card-title">${escapeHtml(card.title)}</div>` 
+                            : '';
+
+                        cardEl.innerHTML = `
+                            <div class="card-top">
+                                <span class="card-order-badge">#${index + 1}</span>
+                                <div class="card-actions">
+                                    <button class="action-icon-btn" title="上移" ${isFirst ? 'disabled style="opacity:0.3;cursor:default;"' : `onclick="swapCardOrder('${card.id}', '${cardsInTopic[index-1].id}')"`}>▲</button>
+                                    <button class="action-icon-btn" title="下移" ${isLast ? 'disabled style="opacity:0.3;cursor:default;"' : `onclick="swapCardOrder('${card.id}', '${cardsInTopic[index+1].id}')"`}>▼</button>
+                                    <button class="action-icon-btn" title="指定序號" onclick="openReorderModal('${card.id}', '${escapeHtml(card.topic)}', ${index + 1}, ${cardsInTopic.length})">🔢</button>
+                                    <button class="action-icon-btn" title="編輯" onclick="openEditModal('${card.id}')">✏️</button>
+                                    <button class="action-icon-btn btn-del" title="刪除" onclick="openDeleteModal('${card.id}', '${escapeHtml(card.title || card.content.substring(0, 15))}')">🗑️</button>
+                                </div>
+                            </div>
+                            ${titleHtml}
+                            ${imgHtml}
+                            <div class="card-content">${linkify(escapeHtml(card.content))}</div>
+                            <div class="card-footer">
+                                <span>🕒 ${card.createdAt || ''}</span>
+                                <span>${card.updatedAt ? '已編輯' : ''}</span>
+                            </div>
+                        `;
+
+                        cardsContainer.appendChild(cardEl);
+                    });
+                }
+
+                boardCanvas.appendChild(colEl);
             });
-            postGrid.innerHTML = html;
+
+            // 尾部快速新增主題框
+            const addColBox = document.createElement('div');
+            addColBox.className = 'add-column-box';
+            addColBox.onclick = () => document.getElementById('modalAddTopic').classList.add('show');
+            addColBox.innerHTML = `
+                <span style="font-size: 2rem;">➕</span>
+                <span>新增主題欄位</span>
+            `;
+            boardCanvas.appendChild(addColBox);
         }
 
-        // 4. 過濾與搜尋功能
-        window.filterByTheme = function(targetTheme) {
-            // 更新按鈕顏色
-            document.querySelectorAll('.filter-btn').forEach(btn => {
-                btn.classList.remove('active');
-                if(btn.innerText === targetTheme) btn.classList.add('active');
+        // ================= 3. 新增記事邏輯 =================
+        window.openNewCardModal = function(defaultTopic) {
+            const select = document.getElementById('newCardTopicSelect');
+            select.innerHTML = '';
+            const allTopics = [...new Set([...boardTopics, ...boardCards.map(c => c.topic)])];
+            if (allTopics.length === 0) allTopics.push('一般記事');
+
+            allTopics.forEach(t => {
+                const opt = document.createElement('option');
+                opt.value = t;
+                opt.innerText = t;
+                if (defaultTopic && t === defaultTopic) opt.selected = true;
+                select.appendChild(opt);
             });
-            
-            searchInput.value = ''; // 切換分類時清空搜尋框
-            
-            if (targetTheme === '全部') {
-                renderPosts(allPosts);
+
+            document.getElementById('newCardCustomTopic').style.display = 'none';
+            document.getElementById('newCardCustomTopic').value = '';
+            select.style.display = 'block';
+            document.getElementById('btnToggleCustomTopic').innerText = '+ 新主題';
+
+            document.getElementById('newCardTitle').value = '';
+            document.getElementById('newCardContent').value = '';
+            document.getElementById('newCardPin').value = '';
+            currentNewImageBase64 = null;
+            document.getElementById('newCardPreviewBox').innerHTML = '<span>支援點選按鈕選圖或按 Ctrl+V 貼上截圖</span>';
+
+            document.getElementById('modalNewCard').classList.add('show');
+        };
+
+        document.getElementById('btnToggleCustomTopic').onclick = () => {
+            const customInput = document.getElementById('newCardCustomTopic');
+            const select = document.getElementById('newCardTopicSelect');
+            const btn = document.getElementById('btnToggleCustomTopic');
+            if (customInput.style.display === 'none') {
+                customInput.style.display = 'block';
+                select.style.display = 'none';
+                btn.innerText = '選擇現有';
+                customInput.focus();
             } else {
-                const filtered = allPosts.filter(p => p.theme === targetTheme);
-                renderPosts(filtered);
+                customInput.style.display = 'none';
+                select.style.display = 'block';
+                btn.innerText = '+ 新主題';
             }
         };
 
-        searchInput.addEventListener('input', (e) => {
-            const keyword = e.target.value.toLowerCase();
-            const filtered = allPosts.filter(p => 
-                (p.note && p.note.toLowerCase().includes(keyword)) || 
-                (p.theme && p.theme.toLowerCase().includes(keyword))
-            );
-            renderPosts(filtered);
-            // 搜尋時取消全部分類按鈕的選取狀態
-            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
-        });
+        // 圖片選取與貼上監聽
+        document.getElementById('btnSelectNewImage').onclick = () => document.getElementById('newCardFileInput').click();
+        document.getElementById('newCardFileInput').onchange = (e) => handleFilePick(e.target.files[0], 'newCardPreviewBox', (b64) => currentNewImageBase64 = b64);
 
-        // ================= Modal 操作與上傳邏輯 =================
-
-        // 開關 Modal
-        addBtn.onclick = () => uploadModal.classList.add('show');
-        cancelBtn.onclick = () => {
-            uploadModal.classList.remove('show');
-            resetForm();
-        };
-
-        function resetForm() {
-            document.getElementById('themeInput').value = '';
-            document.getElementById('noteInput').value = '';
-            currentBase64Image = null;
-            previewBox.innerHTML = '預覽區';
-            submitBtn.innerText = '發布';
-            submitBtn.disabled = false;
-        }
-
-        // 處理圖片選擇
-        selectImgBtn.onclick = () => fileInput.click();
-        fileInput.onchange = (e) => handleImageFile(e.target.files[0]);
-
-        // 處理貼上 (監聽整個 window 即可)
         window.addEventListener('paste', (e) => {
-            // 只有在 Modal 開啟時才處理貼上圖片
-            if (!uploadModal.classList.contains('show')) return;
-            
+            const isNewModalOpen = document.getElementById('modalNewCard').classList.contains('show');
+            const isEditModalOpen = document.getElementById('modalEditCard').classList.contains('show');
+            if (!isNewModalOpen && !isEditModalOpen) return;
+
             const items = e.clipboardData.items;
             for (let i = 0; i < items.length; i++) {
                 if (items[i].type.indexOf('image') !== -1) {
-                    handleImageFile(items[i].getAsFile());
+                    const file = items[i].getAsFile();
+                    if (isNewModalOpen) {
+                        handleFilePick(file, 'newCardPreviewBox', (b64) => currentNewImageBase64 = b64);
+                    } else if (isEditModalOpen) {
+                        handleFilePick(file, 'editCardPreviewBox', (b64) => currentEditImageState = b64);
+                    }
+                    showToast('已貼上剪貼簿圖片！');
+                    break;
                 }
             }
         });
 
-        function handleImageFile(file) {
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                    currentBase64Image = event.target.result;
-                    previewBox.innerHTML = `<img src="${currentBase64Image}" style="max-width: 100%; max-height: 200px; border-radius: 5px;">`;
-                };
-                reader.readAsDataURL(file);
-            }
+        function handleFilePick(file, previewBoxId, callback) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (evt) => {
+                callback(evt.target.result);
+                document.getElementById(previewBoxId).innerHTML = `
+                    <img src="${evt.target.result}" alt="預覽">
+                    <button class="preview-remove-btn" onclick="clearPreview('${previewBoxId}', callback)">✕</button>
+                `;
+            };
+            reader.readAsDataURL(file);
         }
 
-        // 發布上傳
-        submitBtn.onclick = () => {
-            const theme = document.getElementById('themeInput').value.trim();
-            const note = document.getElementById('noteInput').value.trim();
-            
-            if (!note && !currentBase64Image) {
-                alert('請至少輸入文字或附上圖片！');
+        window.clearPreview = function(previewBoxId) {
+            if (previewBoxId === 'newCardPreviewBox') {
+                currentNewImageBase64 = null;
+                document.getElementById(previewBoxId).innerHTML = '<span>已移除圖片</span>';
+            } else if (previewBoxId === 'editCardPreviewBox') {
+                currentEditImageState = 'REMOVE';
+                document.getElementById(previewBoxId).innerHTML = '<span style="color:var(--danger)">已排程移除圖片 (點儲存後生效)</span>';
+            }
+        };
+
+        // 提交新增
+        document.getElementById('btnSubmitNewCard').onclick = async () => {
+            const customInput = document.getElementById('newCardCustomTopic');
+            const topic = (customInput.style.display !== 'none' && customInput.value.trim()) 
+                ? customInput.value.trim() 
+                : document.getElementById('newCardTopicSelect').value;
+            const title = document.getElementById('newCardTitle').value.trim();
+            const content = document.getElementById('newCardContent').value.trim();
+            const pin = document.getElementById('newCardPin').value.trim();
+
+            if (!content && !currentNewImageBase64) {
+                showToast('請至少輸入文字內容或附帶圖片', 'error');
                 return;
             }
 
-            submitBtn.innerText = '上傳中...';
-            submitBtn.disabled = true;
+            showLoading('發布上傳中...');
+            closeAllModals();
 
-            fetch(GAS_URL, {
-                method: 'POST',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify({
-                    theme: theme,
-                    note: note,
-                    image: currentBase64Image
-                })
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.status === 'success') {
-                    uploadModal.classList.remove('show');
-                    resetForm();
-                    loadData(); // 重新載入最新資料
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'createPost',
+                        topic: topic,
+                        title: title,
+                        content: content,
+                        image: currentNewImageBase64,
+                        pin: pin
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showToast('✅ 記事發布成功！', 'success');
+                    await loadBoardData();
                 } else {
-                    alert('上傳失敗：' + data.message);
-                    submitBtn.innerText = '發布';
-                    submitBtn.disabled = false;
+                    showToast('❌ 發布失敗：' + result.message, 'error');
                 }
-            })
-            .catch(err => {
+            } catch (err) {
                 console.error(err);
-                alert('網路錯誤');
-                submitBtn.innerText = '發布';
-                submitBtn.disabled = false;
-            });
+                showToast('網路連線失敗', 'error');
+            } finally {
+                hideLoading();
+            }
         };
+
+        // ================= 4. 排序與上下移 =================
+        window.swapCardOrder = async function(id1, id2) {
+            showLoading('調整順序中...');
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({ action: 'swapOrder', id1: id1, id2: id2 })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showToast('順序已更新');
+                    await loadBoardData();
+                } else {
+                    showToast('順序調整失敗：' + result.message, 'error');
+                }
+            } catch (err) {
+                showToast('網路連線失敗', 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        window.openReorderModal = function(id, topic, currentIndex, maxCount) {
+            pendingReorderCard = { id, topic };
+            document.getElementById('reorderHint').innerText = `目前位於【${topic}】的第 ${currentIndex} 位 (共 ${maxCount} 篇)`;
+            const input = document.getElementById('targetIndexInput');
+            input.value = currentIndex;
+            input.max = maxCount;
+            document.getElementById('modalReorder').classList.add('show');
+        };
+
+        document.getElementById('btnSubmitReorder').onclick = async () => {
+            if (!pendingReorderCard) return;
+            const targetIdx = parseInt(document.getElementById('targetIndexInput').value, 10);
+            if (isNaN(targetIdx) || targetIdx < 1) {
+                showToast('請輸入有效序號 (1 以上)', 'error');
+                return;
+            }
+
+            showLoading('重新排列中...');
+            closeAllModals();
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'setOrderIndex',
+                        id: pendingReorderCard.id,
+                        topic: pendingReorderCard.topic,
+                        targetIndex: targetIdx
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showToast('已重整至第 ' + targetIdx + ' 位', 'success');
+                    await loadBoardData();
+                } else {
+                    showToast('調整失敗：' + result.message, 'error');
+                }
+            } catch (err) {
+                showToast('網路連線失敗', 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // ================= 5. 密碼保護刪除 =================
+        window.openDeleteModal = function(id, hintTitle) {
+            pendingDeleteId = id;
+            document.getElementById('deleteCardHint').innerText = `欲刪除之記事：「${hintTitle}」\n此動作需要輸入保護密碼！`;
+            document.getElementById('deleteCardPinInput').value = '';
+            document.getElementById('modalDeleteCard').classList.add('show');
+        };
+
+        document.getElementById('btnConfirmDelete').onclick = async () => {
+            const pin = document.getElementById('deleteCardPinInput').value.trim();
+            if (!pin) {
+                showToast('請輸入密碼！', 'error');
+                return;
+            }
+
+            showLoading('驗證密碼並刪除中...');
+            closeAllModals();
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'deletePost',
+                        id: pendingDeleteId,
+                        pin: pin
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showToast('🗑️ 記事已成功刪除', 'success');
+                    await loadBoardData();
+                } else {
+                    showToast(result.message || '密碼錯誤，拒絕刪除！', 'error');
+                }
+            } catch (err) {
+                showToast('網路連線失敗', 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // ================= 6. 編輯卡片 =================
+        window.openEditModal = function(id) {
+            const card = boardCards.find(c => c.id === id);
+            if (!card) return;
+
+            document.getElementById('editCardId').value = card.id;
+            document.getElementById('editCardTopic').value = card.topic;
+            document.getElementById('editCardTitle').value = card.title || '';
+            document.getElementById('editCardContent').value = card.content || '';
+            currentEditImageState = null;
+
+            const preview = document.getElementById('editCardPreviewBox');
+            if (card.imageUrl) {
+                preview.innerHTML = `<img src="${card.imageUrl}" alt="附圖">`;
+            } else {
+                preview.innerHTML = '<span>目前無附圖</span>';
+            }
+
+            document.getElementById('modalEditCard').classList.add('show');
+        };
+
+        document.getElementById('btnReplaceImage').onclick = () => document.getElementById('editCardFileInput').click();
+        document.getElementById('editCardFileInput').onchange = (e) => handleFilePick(e.target.files[0], 'editCardPreviewBox', (b64) => currentEditImageState = b64);
+        document.getElementById('btnRemoveImage').onclick = () => clearPreview('editCardPreviewBox');
+
+        document.getElementById('btnSubmitEditCard').onclick = async () => {
+            const id = document.getElementById('editCardId').value;
+            const topic = document.getElementById('editCardTopic').value.trim();
+            const title = document.getElementById('editCardTitle').value.trim();
+            const content = document.getElementById('editCardContent').value.trim();
+
+            showLoading('儲存修改中...');
+            closeAllModals();
+
+            try {
+                const res = await fetch(GAS_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                    body: JSON.stringify({
+                        action: 'updatePost',
+                        id: id,
+                        topic: topic,
+                        title: title,
+                        content: content,
+                        image: currentEditImageState
+                    })
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    showToast('修改已儲存！', 'success');
+                    await loadBoardData();
+                } else {
+                    showToast('儲存失敗：' + result.message, 'error');
+                }
+            } catch (err) {
+                showToast('網路連線失敗', 'error');
+            } finally {
+                hideLoading();
+            }
+        };
+
+        // ================= 7. 新增主題欄位 =================
+        document.getElementById('btnAddTopic').onclick = () => {
+            document.getElementById('newTopicNameInput').value = '';
+            document.getElementById('modalAddTopic').classList.add('show');
+        };
+
+        document.getElementById('btnSubmitNewTopic').onclick = () => {
+            const name = document.getElementById('newTopicNameInput').value.trim();
+            if (!name) {
+                showToast('請輸入主題名稱', 'error');
+                return;
+            }
+            if (!boardTopics.includes(name)) {
+                boardTopics.push(name);
+            }
+            closeAllModals();
+            renderBoard();
+            showToast('已新增主題【' + name + '】');
+        };
+
+        // ================= 8. 燈箱與共用輔助 =================
+        window.openLightbox = function(url) {
+            document.getElementById('lightboxImg').src = url;
+            document.getElementById('lightboxModal').classList.add('show');
+        };
+
+        window.closeAllModals = function() {
+            document.querySelectorAll('.modal').forEach(m => m.classList.remove('show'));
+        };
+
+        // 搜尋監聽
+        searchInput.addEventListener('input', () => renderBoard());
+        document.getElementById('btnRefresh').onclick = () => loadBoardData();
+        document.getElementById('btnNewNote').onclick = () => openNewCardModal();
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+        }
+
+        function linkify(text) {
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            return text.replace(urlRegex, url => `<a href="${url}" target="_blank" rel="noopener noreferrer" style="color:var(--primary);text-decoration:underline;">${url}</a>`);
+        }
 
         // PWA Service Worker 註冊
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('sw.js').catch(err => console.log(err));
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW fail:', err));
             });
         }
 
-        // 啟動載入
-        loadData();
+        // 初始啟動
+        loadBoardData();
     </script>
 </body>
 </html>

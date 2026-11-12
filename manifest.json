@@ -1,10 +1,11 @@
 {
-  "name": "雲端記事截圖",
-  "short_name": "雲端記事",
+  "name": "雲端記事牆 Padlet",
+  "short_name": "記事牆",
+  "description": "具備 Padlet 模式的雲端筆記資料速記 APP",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4CAF50",
+  "background_color": "#ECEFF1",
+  "theme_color": "#2E7D32",
   "icons": [
     {
       "src": "icon-192.png",
